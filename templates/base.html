@@ -381,8 +381,9 @@
                 font-size: 13px;
             }
             
-            /* Hide "Completed" link on mobile, show "More" dropdown */
-            nav > a[href="/completed-tasks"] {
+            /* Hide "Completed" and "Settings" links on mobile, show "More" dropdown */
+            nav > a[href="/completed-tasks"],
+            nav > a[href="/settings"] {
                 display: none;
             }
             
@@ -570,6 +571,7 @@
                 <a href="/blips" class="{{ 'active' if request.path == '/blips' }}">Blips</a>
                 <a href="/history" class="{{ 'active' if request.path == '/history' }}">History</a>
                 <a href="/completed-tasks" class="{{ 'active' if request.path == '/completed-tasks' }}">Completed</a>
+                <a href="/settings" class="{{ 'active' if request.path.startswith('/settings') }}">Settings</a>
                 <div class="nav-more">
                     <input type="checkbox" id="nav-more-toggle" class="nav-more-toggle">
                     <label for="nav-more-toggle" class="nav-more-btn">
@@ -577,6 +579,7 @@
                     </label>
                     <div class="nav-more-menu">
                         <a href="/completed-tasks" class="{{ 'active' if request.path == '/completed-tasks' }}">Completed</a>
+                        <a href="/settings" class="{{ 'active' if request.path.startswith('/settings') }}">Settings</a>
                     </div>
                 </div>
             </nav>

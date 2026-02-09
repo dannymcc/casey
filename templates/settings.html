@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Casey{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 700px; margin: 0 auto;">
+    <h2>Settings</h2>
+    
+    <div style="margin-top: 2rem;">
+        <div style="padding: 1.25rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Version</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">Current version of Casey</div>
+                </div>
+                <div style="font-family: 'Monaco', 'Courier New', monospace; font-size: 14px; color: var(--primary); font-weight: 600;">
+                    v{{ version }}
+                </div>
+            </div>
+        </div>
+        
+        <a href="/settings/api" style="text-decoration: none; display: block;">
+            <div style="padding: 1.25rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1.5rem; transition: all 0.15s ease; cursor: pointer;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">API Settings</div>
+                        <div style="font-size: 14px; color: var(--text-secondary);">Manage API keys and access</div>
+                    </div>
+                    <div style="color: var(--text-muted); font-size: 18px;">→</div>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<style>
+a[href="/settings/api"] div:hover {
+    border-color: var(--primary);
+    background: var(--accent-blue);
+}
+</style>
+{% endblock %}

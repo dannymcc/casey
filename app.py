@@ -9,6 +9,7 @@ import secrets
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['API_KEY'] = os.environ.get('API_KEY', secrets.token_urlsafe(32))
+app.config['VERSION'] = '1.0.0'
 
 # Ensure data directory exists
 DATA_DIR = 'data'
@@ -243,7 +244,17 @@ def about():
 @app.route('/api')
 def api_docs():
     """API documentation"""
-    return render_template('api.html', api_key=app.config['API_KEY'])
+    return render_template('api.html')
+
+@app.route('/settings')
+def settings():
+    """Settings page"""
+    return render_template('settings.html', version=app.config['VERSION'])
+
+@app.route('/settings/api')
+def settings_api():
+    """API settings page"""
+    return render_template('settings_api.html', api_key=app.config['API_KEY'])
 
 # API Authentication
 def require_api_key(f):
