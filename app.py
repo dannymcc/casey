@@ -158,6 +158,16 @@ def init_db():
             PRIMARY KEY (user_id, key),
             FOREIGN KEY (user_id) REFERENCES users (id)
         );
+
+        CREATE TABLE IF NOT EXISTS subtasks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            task_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            completed BOOLEAN DEFAULT 0,
+            sort_order INTEGER DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (task_id) REFERENCES tasks (id) ON DELETE CASCADE
+        );
     ''')
 
     # Migrations for existing databases
@@ -204,6 +214,16 @@ def init_db():
     # Check if old unique constraint needs updating -- for new installs this is
     # handled by CREATE TABLE. For existing DBs, the old UNIQUE(journal_date, blip_id)
     # still works since user_id will be NULL for legacy data.
+
+    # Admin role migration
+    cursor = db.execute("PRAGMA table_info(users)")
+    columns = [row[1] for row in cursor.fetchall()]
+    if 'is_admin' not in columns:
+        db.execute('ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0')
+        # Make first user admin by default
+        first_user = db.execute('SELECT id FROM users ORDER BY id LIMIT 1').fetchone()
+        if first_user:
+            db.execute('UPDATE users SET is_admin = 1 WHERE id = ?', (first_user[0],))
 
     # Full-text search virtual tables
     db.executescript('''
@@ -279,6 +299,20 @@ def login_required(f):
     def decorated(*args, **kwargs):
         if is_auth_enabled() and 'user_id' not in session:
             return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated
+
+
+def admin_required(f):
+    """Decorator: require admin access."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        db = get_db()
+        user = db.execute('SELECT is_admin FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+        if not user or not user['is_admin']:
+            return redirect(url_for('index'))
         return f(*args, **kwargs)
     return decorated
 
@@ -395,9 +429,18 @@ def word_count_filter(text):
 @app.context_processor
 def inject_auth():
     """Make auth state available to all templates."""
+    is_admin = False
+    if is_auth_enabled() and session.get('user_id'):
+        try:
+            db = get_db()
+            user = db.execute('SELECT is_admin FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+            is_admin = bool(user and user['is_admin'])
+        except Exception:
+            pass
     return {
         'auth_enabled': is_auth_enabled(),
         'current_user': session.get('username') if is_auth_enabled() else None,
+        'is_admin': is_admin,
     }
 
 
@@ -486,8 +529,11 @@ def register():
             return render_template('register.html')
 
         password_hash = generate_password_hash(password)
-        cursor = db.execute('INSERT INTO users (username, password_hash) VALUES (?, ?)',
-                            (username, password_hash))
+        # First user gets admin privileges
+        user_count = db.execute('SELECT COUNT(*) FROM users').fetchone()[0]
+        is_admin = 1 if user_count == 0 else 0
+        cursor = db.execute('INSERT INTO users (username, password_hash, is_admin) VALUES (?, ?, ?)',
+                            (username, password_hash, is_admin))
         db.commit()
 
         session.permanent = True
@@ -537,6 +583,14 @@ def index():
                      due_date ASC, created_at DESC''',
         uf_params
     ).fetchall()
+
+    # Load subtasks for each task
+    task_subtasks = {}
+    for task in tasks:
+        task_subtasks[task['id']] = db.execute(
+            'SELECT * FROM subtasks WHERE task_id = ? ORDER BY sort_order',
+            (task['id'],)
+        ).fetchall()
 
     # Get today's blips (or select 3 random ones if none selected yet)
     daily_uf, daily_uf_params = user_filter('db')
@@ -627,9 +681,11 @@ def index():
                            journal=journal,
                            journal_tags=journal_tags,
                            tasks=tasks,
+                           task_subtasks=task_subtasks,
                            blips=daily_blips,
                            today=today,
                            is_new_user=is_new_user,
+                           templates=JOURNAL_TEMPLATES,
                            stats={
                                'entries': total_entries,
                                'active_tasks': len(tasks),
@@ -1338,10 +1394,14 @@ def delete_account():
         return redirect(url_for('settings_account'))
 
     user_id = session['user_id']
+    db.execute('DELETE FROM subtasks WHERE task_id IN (SELECT id FROM tasks WHERE user_id = ?)', (user_id,))
     db.execute('DELETE FROM daily_blips WHERE user_id = ?', (user_id,))
     db.execute('DELETE FROM blips WHERE user_id = ?', (user_id,))
     db.execute('DELETE FROM tasks WHERE user_id = ?', (user_id,))
+    db.execute('DELETE FROM journal_tags WHERE journal_entry_id IN (SELECT id FROM journal_entries WHERE user_id = ?)', (user_id,))
     db.execute('DELETE FROM journal_entries WHERE user_id = ?', (user_id,))
+    db.execute('DELETE FROM tags WHERE user_id = ?', (user_id,))
+    db.execute('DELETE FROM user_preferences WHERE user_id = ?', (user_id,))
     db.execute('DELETE FROM api_tokens WHERE user_id = ?', (user_id,))
     db.execute('DELETE FROM users WHERE id = ?', (user_id,))
     db.commit()
@@ -1406,6 +1466,184 @@ def import_json():
     total = imported['journal'] + imported['tasks'] + imported['blips']
     flash(f'Imported {total} items ({imported["journal"]} entries, {imported["tasks"]} tasks, {imported["blips"]} blips).', 'success')
     return redirect(url_for('settings'))
+
+
+# --- Subtasks ---
+
+@app.route('/tasks/<int:task_id>/subtasks/add', methods=['POST'])
+@login_required
+def add_subtask(task_id):
+    """Add a subtask to a task."""
+    title = request.form.get('title', '').strip()
+    db = get_db()
+    uf, uf_params = user_filter()
+    task = db.execute(f'SELECT id FROM tasks WHERE id = ? AND {uf}', (task_id, *uf_params)).fetchone()
+    if task and title:
+        max_order = db.execute('SELECT COALESCE(MAX(sort_order), 0) FROM subtasks WHERE task_id = ?',
+                               (task_id,)).fetchone()[0]
+        db.execute('INSERT INTO subtasks (task_id, title, sort_order) VALUES (?, ?, ?)',
+                   (task_id, title, max_order + 1))
+        db.commit()
+    return redirect(url_for('index'))
+
+
+@app.route('/subtasks/<int:subtask_id>/toggle', methods=['POST'])
+@login_required
+def toggle_subtask(subtask_id):
+    """Toggle subtask completion."""
+    db = get_db()
+    uf, uf_params = user_filter()
+    subtask = db.execute(
+        f'SELECT s.* FROM subtasks s JOIN tasks t ON s.task_id = t.id WHERE s.id = ? AND {uf.replace("user_id", "t.user_id")}',
+        (subtask_id, *uf_params)
+    ).fetchone()
+    if subtask:
+        db.execute('UPDATE subtasks SET completed = ? WHERE id = ?',
+                   (0 if subtask['completed'] else 1, subtask_id))
+        db.commit()
+    return redirect(url_for('index'))
+
+
+@app.route('/subtasks/<int:subtask_id>/delete', methods=['POST'])
+@login_required
+def delete_subtask(subtask_id):
+    """Delete a subtask."""
+    db = get_db()
+    uf, uf_params = user_filter()
+    db.execute(
+        f'DELETE FROM subtasks WHERE id = ? AND task_id IN (SELECT id FROM tasks WHERE {uf})',
+        (subtask_id, *uf_params)
+    )
+    db.commit()
+    return redirect(url_for('index'))
+
+
+# --- Calendar View ---
+
+@app.route('/calendar')
+@login_required
+def calendar_view():
+    """Calendar view of journal entries."""
+    db = get_db()
+    uf, uf_params = user_filter()
+    year = request.args.get('year', date.today().year, type=int)
+    month = request.args.get('month', date.today().month, type=int)
+
+    # Get all entries for this month
+    start_date = f'{year:04d}-{month:02d}-01'
+    if month == 12:
+        end_date = f'{year+1:04d}-01-01'
+    else:
+        end_date = f'{year:04d}-{month+1:02d}-01'
+
+    entries = db.execute(
+        f'SELECT date, mood FROM journal_entries WHERE {uf} AND date >= ? AND date < ? ORDER BY date',
+        (*uf_params, start_date, end_date)
+    ).fetchall()
+    entry_dates = {e['date']: e['mood'] for e in entries}
+
+    # Build calendar data
+    import calendar as cal
+    cal_obj = cal.Calendar(firstweekday=0)  # Monday first
+    weeks = cal_obj.monthdayscalendar(year, month)
+
+    month_name = cal.month_name[month]
+
+    # Previous/next month
+    if month == 1:
+        prev_year, prev_month = year - 1, 12
+    else:
+        prev_year, prev_month = year, month - 1
+    if month == 12:
+        next_year, next_month = year + 1, 1
+    else:
+        next_year, next_month = year, month + 1
+
+    return render_template('calendar.html',
+                           year=year, month=month, month_name=month_name,
+                           weeks=weeks, entry_dates=entry_dates,
+                           prev_year=prev_year, prev_month=prev_month,
+                           next_year=next_year, next_month=next_month,
+                           today=date.today().isoformat())
+
+
+# --- Journal Templates ---
+
+JOURNAL_TEMPLATES = [
+    {
+        'name': 'Morning Pages',
+        'content': "What's on my mind this morning:\n\n\nWhat I'm grateful for:\n\n\nMy intention for today:\n\n",
+    },
+    {
+        'name': 'Weekly Review',
+        'content': "## What went well this week\n\n\n## What didn't go well\n\n\n## What I learned\n\n\n## Focus for next week\n\n",
+    },
+    {
+        'name': 'Daily Standup',
+        'content': "## Done yesterday\n\n\n## Doing today\n\n\n## Blockers\n\n",
+    },
+    {
+        'name': 'Brain Dump',
+        'content': "",
+    },
+]
+
+
+@app.route('/journal/templates')
+@login_required
+def journal_templates():
+    """Get available journal templates as JSON."""
+    return jsonify({'templates': JOURNAL_TEMPLATES})
+
+
+# --- Admin Panel ---
+
+@app.route('/admin')
+@admin_required
+def admin_panel():
+    """Admin dashboard."""
+    db = get_db()
+    stats = {
+        'total_users': db.execute('SELECT COUNT(*) FROM users').fetchone()[0],
+        'total_entries': db.execute('SELECT COUNT(*) FROM journal_entries').fetchone()[0],
+        'total_tasks': db.execute('SELECT COUNT(*) FROM tasks').fetchone()[0],
+        'total_blips': db.execute('SELECT COUNT(*) FROM blips').fetchone()[0],
+        'active_today': db.execute(
+            "SELECT COUNT(DISTINCT user_id) FROM journal_entries WHERE date = ?",
+            (date.today().isoformat(),)
+        ).fetchone()[0],
+        'new_users_7d': db.execute(
+            "SELECT COUNT(*) FROM users WHERE created_at >= datetime('now', '-7 days')"
+        ).fetchone()[0],
+    }
+
+    users = db.execute('''
+        SELECT u.id, u.username, u.is_admin, u.created_at,
+               (SELECT COUNT(*) FROM journal_entries WHERE user_id = u.id) as entry_count,
+               (SELECT COUNT(*) FROM tasks WHERE user_id = u.id) as task_count,
+               (SELECT COUNT(*) FROM blips WHERE user_id = u.id) as blip_count,
+               (SELECT MAX(date) FROM journal_entries WHERE user_id = u.id) as last_active
+        FROM users u ORDER BY u.created_at DESC
+    ''').fetchall()
+
+    return render_template('admin.html', stats=stats, users=users)
+
+
+@app.route('/admin/users/<int:user_id>/toggle-admin', methods=['POST'])
+@admin_required
+def toggle_admin(user_id):
+    """Toggle admin status for a user."""
+    if user_id == session['user_id']:
+        flash('Cannot change your own admin status.', 'error')
+        return redirect(url_for('admin_panel'))
+    db = get_db()
+    user = db.execute('SELECT is_admin FROM users WHERE id = ?', (user_id,)).fetchone()
+    if user:
+        db.execute('UPDATE users SET is_admin = ? WHERE id = ?',
+                   (0 if user['is_admin'] else 1, user_id))
+        db.commit()
+        flash('Admin status updated.', 'success')
+    return redirect(url_for('admin_panel'))
 
 
 # --- API Authentication ---

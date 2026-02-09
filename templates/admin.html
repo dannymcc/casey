@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - Casey{% endblock %}
+
+{% block extra_styles %}
+.admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.admin-stat {
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    padding: 1rem;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.admin-stat-value {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.02em;
+}
+
+.admin-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-top: 0.25rem;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.user-table th {
+    text-align: left;
+    padding: 0.625rem 0.75rem;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border);
+}
+
+.user-table td {
+    padding: 0.625rem 0.75rem;
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-secondary);
+}
+
+.user-table tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-badge {
+    font-size: 10px;
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    background: var(--accent-subtle);
+    color: var(--accent);
+    font-weight: 600;
+    margin-left: 0.375rem;
+}
+
+.admin-toggle {
+    font-size: 12px;
+    padding: 0.25rem 0.5rem;
+    min-height: auto;
+    background: var(--surface);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.admin-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    opacity: 1;
+}
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 800px;">
+    <h1 class="page-title">Admin Panel</h1>
+    <p class="page-desc">System overview and user management</p>
+
+    <div class="admin-stats">
+        <div class="admin-stat">
+            <div class="admin-stat-value">{{ stats.total_users }}</div>
+            <div class="admin-stat-label">Users</div>
+        </div>
+        <div class="admin-stat">
+            <div class="admin-stat-value">{{ stats.total_entries }}</div>
+            <div class="admin-stat-label">Entries</div>
+        </div>
+        <div class="admin-stat">
+            <div class="admin-stat-value">{{ stats.total_tasks }}</div>
+            <div class="admin-stat-label">Tasks</div>
+        </div>
+        <div class="admin-stat">
+            <div class="admin-stat-value">{{ stats.total_blips }}</div>
+            <div class="admin-stat-label">Blips</div>
+        </div>
+        <div class="admin-stat">
+            <div class="admin-stat-value">{{ stats.active_today }}</div>
+            <div class="admin-stat-label">Active Today</div>
+        </div>
+        <div class="admin-stat">
+            <div class="admin-stat-value">{{ stats.new_users_7d }}</div>
+            <div class="admin-stat-label">New (7d)</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Users</h2>
+        <div style="overflow-x: auto;">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Entries</th>
+                        <th>Tasks</th>
+                        <th>Blips</th>
+                        <th>Last Active</th>
+                        <th>Joined</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>
+                            <strong style="color: var(--text);">{{ user.username }}</strong>
+                            {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
+                        </td>
+                        <td>{{ user.entry_count }}</td>
+                        <td>{{ user.task_count }}</td>
+                        <td>{{ user.blip_count }}</td>
+                        <td>{{ user.last_active | uk_date if user.last_active else 'Never' }}</td>
+                        <td>{{ user.created_at | uk_date }}</td>
+                        <td>
+                            {% if user.id != session.user_id %}
+                            <form method="POST" action="/admin/users/{{ user.id }}/toggle-admin" style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="admin-toggle">
+                                    {{ 'Remove admin' if user.is_admin else 'Make admin' }}
+                                </button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

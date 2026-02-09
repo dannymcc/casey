@@ -83,6 +83,65 @@
     flex-shrink: 0;
 }
 
+.subtask-item {
+    padding-left: 2rem !important;
+}
+
+.subtask-item input[type="checkbox"] {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    border-width: 1.5px !important;
+}
+
+.task-actions {
+    display: flex;
+    gap: 0.125rem;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.task-item:hover .task-actions { opacity: 1; }
+
+.subtask-toggle {
+    font-size: 11px;
+    padding: 0.125rem 0.375rem;
+    min-height: auto;
+    background: transparent;
+    color: var(--text-muted);
+    border: none;
+    cursor: pointer;
+}
+
+.subtask-toggle:hover { color: var(--accent); background: transparent; }
+
+.template-select {
+    display: flex;
+    gap: 0.375rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+
+.template-btn {
+    font-size: 11px;
+    padding: 0.25rem 0.5rem;
+    min-height: auto;
+    background: var(--surface);
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    border-radius: var(--radius-xs);
+    font-family: var(--font);
+    font-weight: 500;
+    transition: all 0.15s;
+}
+
+.template-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-subtle);
+}
+
 .blip-label {
     display: inline-flex;
     align-items: center;
@@ -193,6 +252,15 @@
             </div>
             <form id="journal-form" method="POST" action="/journal/save">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                {% if not journal or not journal.content %}
+                <div class="template-select">
+                    {% for tmpl in templates %}
+                    {% if tmpl.content %}
+                    <button type="button" class="template-btn" onclick="applyTemplate('{{ tmpl.content | e }}')">{{ tmpl.name }}</button>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                {% endif %}
                 <textarea id="journal-content" name="content" rows="12" placeholder="What's on your mind today?">{{ journal.content if journal else '' }}</textarea>
                 <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap;">
                     <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -290,9 +358,34 @@
                                     {% endif %}
                                 </span>
                             </form>
-                            <form method="POST" action="/tasks/{{ task.id }}/delete" style="margin: 0;">
+                            <div class="task-actions">
+                                <button type="button" class="subtask-toggle" title="Add subtask" onclick="toggleSubtaskInput({{ task.id }})">+sub</button>
+                                <form method="POST" action="/tasks/{{ task.id }}/delete" style="margin: 0;">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn-ghost btn-danger task-delete" title="Delete" style="padding: 0.25rem 0.375rem; font-size: 14px; line-height: 1; min-height: auto; opacity: 1;">&times;</button>
+                                </form>
+                            </div>
+                        </li>
+                        {% if task_subtasks.get(task.id) %}
+                        {% for sub in task_subtasks[task.id] %}
+                        <li class="task-item subtask-item {{ 'completed' if sub.completed else '' }}">
+                            <form method="POST" action="/subtasks/{{ sub.id }}/toggle" style="display: flex; align-items: center; flex: 1; margin: 0;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="btn-ghost btn-danger task-delete" title="Delete" style="padding: 0.25rem 0.375rem; font-size: 14px; line-height: 1; min-height: auto;">&times;</button>
+                                <input type="checkbox" {{ 'checked' if sub.completed else '' }} onchange="this.form.submit()">
+                                <span style="flex: 1; font-size: 13px;">{{ sub.title }}</span>
+                            </form>
+                            <form method="POST" action="/subtasks/{{ sub.id }}/delete" style="margin: 0;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn-ghost btn-danger task-delete" title="Delete subtask" style="padding: 0.125rem 0.25rem; font-size: 12px; line-height: 1; min-height: auto;">&times;</button>
+                            </form>
+                        </li>
+                        {% endfor %}
+                        {% endif %}
+                        <li class="subtask-add" style="display: none;" data-task="{{ task.id }}">
+                            <form method="POST" action="/tasks/{{ task.id }}/subtasks/add" style="display: flex; align-items: center; gap: 0.375rem; margin: 0; padding: 0.375rem 0 0.375rem 2rem;">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <input type="text" name="title" placeholder="Add subtask..." required style="font-size: 12px; padding: 0.25rem 0.5rem; flex: 1;">
+                                <button type="submit" style="font-size: 11px; padding: 0.25rem 0.5rem; min-height: auto;">Add</button>
                             </form>
                         </li>
                     {% endfor %}
@@ -351,5 +444,25 @@
         timer = setTimeout(autoSave, 1500);
     });
 })();
+
+function toggleSubtaskInput(taskId) {
+    var el = document.querySelector('.subtask-add[data-task="' + taskId + '"]');
+    if (el) {
+        el.style.display = el.style.display === 'none' ? 'block' : 'none';
+        if (el.style.display === 'block') {
+            el.querySelector('input[name="title"]').focus();
+        }
+    }
+}
+
+function applyTemplate(content) {
+    var textarea = document.getElementById('journal-content');
+    textarea.value = content.replace(/\\n/g, '\n');
+    textarea.focus();
+    textarea.dispatchEvent(new Event('input'));
+    // Hide template buttons
+    var templateDiv = document.querySelector('.template-select');
+    if (templateDiv) templateDiv.style.display = 'none';
+}
 </script>
 {% endblock %}

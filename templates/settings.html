@@ -168,6 +168,16 @@ a.settings-row:hover {
             </div>
             <span class="settings-arrow">&rsaquo;</span>
         </a>
+
+        {% if is_admin %}
+        <a href="/admin" class="settings-row">
+            <div>
+                <div class="settings-label">Admin Panel</div>
+                <div class="settings-desc">System overview and user management</div>
+            </div>
+            <span class="settings-arrow">&rsaquo;</span>
+        </a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

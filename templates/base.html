@@ -459,7 +459,7 @@
             .container { padding: 0 1rem; }
             header .container { height: 52px; }
             nav a { padding: 0.3125rem 0.625rem; font-size: 13px; white-space: nowrap; }
-            nav > a[href="/completed-tasks"], nav > a[href="/settings"] { display: none; }
+            nav > a[href="/completed-tasks"], nav > a[href="/settings"], nav > a[href="/calendar"] { display: none; }
             .nav-sep, .nav-user { display: none; }
             .nav-more { display: block; }
             .card { padding: 1.25rem; }
@@ -734,6 +734,7 @@
                 <a href="/" class="{{ 'active' if request.path == '/' }}">Today</a>
                 <a href="/blips" class="{{ 'active' if request.path == '/blips' }}">Blips</a>
                 <a href="/history" class="{{ 'active' if request.path == '/history' }}">History</a>
+                <a href="/calendar" class="{{ 'active' if request.path == '/calendar' }}">Calendar</a>
                 <a href="/completed-tasks" class="{{ 'active' if request.path == '/completed-tasks' }}">Completed</a>
                 <a href="/settings" class="{{ 'active' if request.path.startswith('/settings') }}">Settings</a>
                 <div class="nav-search">
@@ -761,8 +762,12 @@
                     </label>
                     <div class="nav-more-menu">
                         <a href="/search">Search</a>
+                        <a href="/calendar">Calendar</a>
                         <a href="/completed-tasks">Completed</a>
                         <a href="/settings">Settings</a>
+                        {% if is_admin %}
+                        <a href="/admin">Admin</a>
+                        {% endif %}
                         {% if auth_enabled and current_user %}
                         <form method="POST" action="/logout" style="margin: 0;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
