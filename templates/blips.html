@@ -20,9 +20,9 @@
                 <div style="flex: 1;">
                     {{ blip.content }}
                     <div class="blip-meta">
-                        Created {{ blip.created_at[:10] }}
+                        Created {{ blip.created_at | uk_date }}
                         {% if blip.last_surfaced %}
-                            • Last surfaced {{ blip.last_surfaced[:10] }} ({{ blip.surface_count }}x)
+                            • Last surfaced {{ blip.last_surfaced | uk_date }} ({{ blip.surface_count }}×)
                         {% else %}
                             • Never surfaced
                         {% endif %}

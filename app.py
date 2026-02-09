@@ -7,7 +7,34 @@ import os
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
-DATABASE = 'casey.db'
+# Ensure data directory exists
+DATA_DIR = 'data'
+os.makedirs(DATA_DIR, exist_ok=True)
+
+DATABASE = os.path.join(DATA_DIR, 'casey.db')
+
+@app.template_filter('uk_date')
+def uk_date_filter(date_string):
+    """Format date to British DD/MM/YYYY format"""
+    if not date_string:
+        return ''
+    try:
+        # Parse ISO date (YYYY-MM-DD)
+        dt = datetime.fromisoformat(date_string.split('T')[0])
+        return dt.strftime('%d/%m/%Y')
+    except:
+        return date_string
+
+@app.template_filter('uk_date_long')
+def uk_date_long_filter(date_string):
+    """Format date to British long format (e.g., Monday, 9 February 2026)"""
+    if not date_string:
+        return ''
+    try:
+        dt = datetime.fromisoformat(date_string.split('T')[0])
+        return dt.strftime('%A, %-d %B %Y')
+    except:
+        return date_string
 
 def get_db():
     """Get database connection"""
@@ -204,6 +231,11 @@ def completed_tasks():
     db.close()
     
     return render_template('completed_tasks.html', tasks=tasks)
+
+@app.route('/about')
+def about():
+    """About page"""
+    return render_template('about.html')
 
 if __name__ == '__main__':
     init_db()

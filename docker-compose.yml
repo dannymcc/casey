@@ -5,9 +5,9 @@ services:
     build: .
     container_name: casey
     ports:
-      - "5090:5090"
+      - "5095:5090"
     volumes:
-      - casey-data:/app
+      - casey-data:/app/data
     environment:
       - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
       - FLASK_DEBUG=False

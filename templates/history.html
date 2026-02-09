@@ -12,8 +12,8 @@
     {% if entries %}
         {% for entry in entries %}
             <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
-                <div style="font-weight: bold; color: var(--valdan-blue); margin-bottom: 0.5rem;">
-                    📅 {{ entry.date }}
+                <div style="font-weight: bold; color: var(--primary); margin-bottom: 0.5rem;">
+                    {{ entry.date | uk_date_long }}
                 </div>
                 <div style="white-space: pre-wrap; color: var(--text-primary);">
                     {{ entry.content }}

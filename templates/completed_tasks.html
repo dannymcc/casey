@@ -15,7 +15,7 @@
                 <li class="task-item" style="opacity: 0.8;">
                     <span style="flex: 1;">✓ {{ task.title }}</span>
                     <span style="font-size: 0.75rem; color: var(--text-secondary);">
-                        {{ task.completed_at[:10] if task.completed_at else 'Unknown' }}
+                        {{ task.completed_at | uk_date if task.completed_at else 'Unknown' }}
                     </span>
                 </li>
             {% endfor %}
