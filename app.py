@@ -507,9 +507,12 @@ def logout():
 # --- Page routes ---
 
 @app.route('/')
-@login_required
 def index():
-    """Main dashboard."""
+    """Main dashboard or landing page for visitors."""
+    if is_auth_enabled() and 'user_id' not in session:
+        return render_template('landing.html')
+
+
     db = get_db()
     today = date.today().isoformat()
     uf, uf_params = user_filter()
@@ -1059,6 +1062,18 @@ def completed_tasks():
 def about():
     """About page."""
     return render_template('about.html')
+
+
+@app.route('/terms')
+def terms():
+    """Terms of Service page."""
+    return render_template('terms.html')
+
+
+@app.route('/privacy')
+def privacy():
+    """Privacy Policy page."""
+    return render_template('privacy.html')
 
 
 @app.route('/api')

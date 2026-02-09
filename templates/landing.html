@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Casey - A personal productivity app for journaling, task management, and resurfacing ideas. Inspired by Casey Newton's system.">
+    <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1A1A1A" media="(prefers-color-scheme: dark)">
+    <title>Casey - Journal, Tasks, and Blips</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --font: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --bg: #F7F7F5;
+            --surface: #FFFFFF;
+            --text: #1A1A1A;
+            --text-secondary: #6B6B6B;
+            --text-muted: #9B9B9B;
+            --accent: #D4754E;
+            --accent-hover: #C0653F;
+            --accent-subtle: #FDF5F1;
+            --border: #EBEBEB;
+            --border-light: #F2F2F0;
+            --radius: 10px;
+            --radius-sm: 7px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1A1A1A;
+                --surface: #242424;
+                --text: #E8E8E8;
+                --text-secondary: #A0A0A0;
+                --text-muted: #707070;
+                --accent: #E08A60;
+                --accent-hover: #D4754E;
+                --accent-subtle: #2D2420;
+                --border: #333333;
+                --border-light: #2A2A2A;
+                --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+                --shadow-md: 0 4px 12px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2);
+            }
+        }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 14px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Header */
+        .landing-header {
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .landing-brand {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text);
+            text-decoration: none;
+            letter-spacing: -0.02em;
+        }
+
+        .landing-nav {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .landing-nav a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            padding: 0.375rem 0.75rem;
+            border-radius: 99px;
+            transition: all 0.15s;
+        }
+
+        .landing-nav a:hover {
+            color: var(--text);
+            background: rgba(128,128,128,0.08);
+        }
+
+        .landing-nav .btn-login {
+            background: var(--text);
+            color: var(--bg);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+        }
+
+        .landing-nav .btn-login:hover {
+            opacity: 0.85;
+            background: var(--text);
+            color: var(--bg);
+        }
+
+        /* Hero */
+        .hero {
+            text-align: center;
+            padding: 5rem 1.5rem 3rem;
+            max-width: 640px;
+            margin: 0 auto;
+            animation: enter 0.4s ease-out;
+        }
+
+        @keyframes enter {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            letter-spacing: -0.035em;
+            line-height: 1.15;
+            margin-bottom: 1.25rem;
+        }
+
+        .hero p {
+            font-size: 1.0625rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 480px;
+            margin: 0 auto 2rem;
+        }
+
+        .hero-cta {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-cta a {
+            text-decoration: none;
+            font-family: var(--font);
+            font-size: 14px;
+            font-weight: 500;
+            padding: 0.625rem 1.5rem;
+            border-radius: var(--radius-sm);
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--surface);
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            border-color: #D4D4D4;
+            background: var(--surface);
+        }
+
+        /* Features */
+        .features {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.25rem;
+        }
+
+        .feature {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 1.75rem;
+            box-shadow: var(--shadow);
+        }
+
+        .feature-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: var(--accent-subtle);
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .feature-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .feature h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 0.375rem;
+            letter-spacing: -0.01em;
+        }
+
+        .feature p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.65;
+        }
+
+        /* Philosophy */
+        .philosophy {
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem 4rem;
+            text-align: center;
+        }
+
+        .philosophy-quote {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: var(--accent);
+            line-height: 1.7;
+            padding: 2rem;
+            background: var(--accent-subtle);
+            border-radius: var(--radius);
+            margin-bottom: 1.25rem;
+        }
+
+        .philosophy p {
+            font-size: 13px;
+            color: var(--text-muted);
+            line-height: 1.7;
+        }
+
+        .philosophy a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .philosophy a:hover { text-decoration: underline; }
+
+        /* Footer */
+        .landing-footer {
+            padding: 2rem 1.5rem;
+            text-align: center;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .landing-footer-links {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .landing-footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .landing-footer-links a:hover {
+            color: var(--text-secondary);
+        }
+
+        .landing-footer span {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero { padding: 3rem 1.25rem 2rem; }
+            .hero h1 { font-size: 2rem; }
+            .hero p { font-size: 15px; }
+            .features { grid-template-columns: 1fr; max-width: 400px; }
+        }
+
+        @media (max-width: 480px) {
+            .hero h1 { font-size: 1.75rem; }
+            .landing-header { padding: 1rem; }
+            .features { padding: 1.5rem 1rem 3rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="landing-header">
+        <span class="landing-brand">Casey</span>
+        <nav class="landing-nav">
+            <a href="/about">About</a>
+            <a href="/login" class="btn-login">Log in</a>
+        </nav>
+    </header>
+
+    <section class="hero">
+        <h1>Clear your head.<br>Get things done.</h1>
+        <p>A personal productivity app for morning journaling, simple task management, and resurfacing the ideas that matter. No notifications. No gamification. Just clarity.</p>
+        <div class="hero-cta">
+            <a href="/register" class="btn-primary">Create free account</a>
+            <a href="/about" class="btn-secondary">Learn more</a>
+        </div>
+    </section>
+
+    <section class="features">
+        <div class="feature">
+            <div class="feature-icon">
+                <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 3h12v12H3z"/>
+                    <path d="M3 7h12"/>
+                    <path d="M7 7v8"/>
+                </svg>
+            </div>
+            <h3>Journal</h3>
+            <p>Start each day by writing freely. Track your mood, tag entries, and build a searchable archive of your thoughts.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">
+                <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <path d="M4 9l3 3 7-7"/>
+                </svg>
+            </div>
+            <h3>Tasks</h3>
+            <p>Simple, focused task management with priorities, due dates, and recurring tasks. No complex project hierarchies.</p>
+        </div>
+        <div class="feature">
+            <div class="feature-icon">
+                <svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+                    <circle cx="9" cy="9" r="3"/>
+                    <path d="M9 2v3M9 13v3M2 9h3M13 9h3"/>
+                </svg>
+            </div>
+            <h3>Blips</h3>
+            <p>Capture ideas and let them resurface randomly. A form of spaced repetition that keeps important themes alive.</p>
+        </div>
+    </section>
+
+    <section class="philosophy">
+        <div class="philosophy-quote">
+            Casey exists to get out of your way. For you to be present. Add what you need, ignore what you don't.
+        </div>
+        <p>Inspired by <a href="/about">Casey Newton's productivity system</a>. Use it daily or weekly. There are no streaks to maintain, no points to earn, no guilt if you skip a day.</p>
+    </section>
+
+    <footer class="landing-footer">
+        <div class="landing-footer-links">
+            <a href="/about">About</a>
+            <a href="/terms">Terms</a>
+            <a href="/privacy">Privacy</a>
+        </div>
+        <span>Casey v{{ config.VERSION }}</span>
+    </footer>
+</body>
+</html>

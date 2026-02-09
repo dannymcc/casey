@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Privacy Policy - Casey{% endblock %}
+
+{% block extra_styles %}
+.legal-content {
+    max-width: 640px;
+    line-height: 1.85;
+    font-size: 14px;
+}
+
+.legal-content h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.5rem;
+}
+
+.legal-content h3 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.legal-content p {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.legal-content ul {
+    margin-bottom: 1rem;
+    margin-left: 1.25rem;
+    color: var(--text-secondary);
+}
+
+.legal-content ul li {
+    margin-bottom: 0.375rem;
+}
+
+.legal-content a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.legal-content a:hover { text-decoration: underline; }
+
+.legal-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+{% endblock %}
+
+{% block content %}
+<article class="legal-content">
+    <h2>Privacy Policy</h2>
+    <p class="legal-meta">Last updated: February 2026</p>
+
+    <h3>1. What We Collect</h3>
+    <p>Casey collects only what is necessary to provide the service:</p>
+    <ul>
+        <li><strong>Account information:</strong> Username and hashed password (we never store your password in plain text)</li>
+        <li><strong>Content you create:</strong> Journal entries, tasks, blips, and tags</li>
+        <li><strong>Usage metadata:</strong> Timestamps for when content is created or modified, blip surface counts</li>
+        <li><strong>Preferences:</strong> Your chosen settings (theme, daily blip count)</li>
+    </ul>
+
+    <h3>2. What We Don't Collect</h3>
+    <ul>
+        <li>No email addresses (unless you choose to add one in the future)</li>
+        <li>No analytics or tracking scripts</li>
+        <li>No third-party cookies</li>
+        <li>No advertising identifiers</li>
+        <li>No location data</li>
+    </ul>
+
+    <h3>3. How We Use Your Data</h3>
+    <p>Your data is used solely to provide Casey's features to you. We do not:</p>
+    <ul>
+        <li>Sell your data to third parties</li>
+        <li>Use your data for advertising</li>
+        <li>Share your data with other users</li>
+        <li>Train machine learning models on your content</li>
+    </ul>
+
+    <h3>4. Data Storage and Security</h3>
+    <p>Your data is stored in an encrypted database on servers we control. We use industry-standard security measures including:</p>
+    <ul>
+        <li>Password hashing with secure algorithms</li>
+        <li>CSRF protection on all forms</li>
+        <li>HTTPS for all connections</li>
+        <li>Secure, HTTP-only session cookies</li>
+        <li>Rate limiting on authentication endpoints</li>
+    </ul>
+
+    <h3>5. Your Rights</h3>
+    <p>You have full control over your data:</p>
+    <ul>
+        <li><strong>Access:</strong> View all your data through the app at any time</li>
+        <li><strong>Export:</strong> Download all your data in JSON or CSV format from Settings</li>
+        <li><strong>Delete:</strong> Permanently delete your account and all data from Settings</li>
+        <li><strong>Modify:</strong> Edit or delete any individual entry, task, or blip</li>
+    </ul>
+
+    <h3>6. Data Retention</h3>
+    <p>Your data is retained for as long as your account is active. When you delete your account, all associated data is permanently and immediately removed from our database.</p>
+
+    <h3>7. Cookies</h3>
+    <p>Casey uses a single session cookie to keep you logged in. This cookie is:</p>
+    <ul>
+        <li>HTTP-only (not accessible to JavaScript)</li>
+        <li>Secure (only sent over HTTPS in production)</li>
+        <li>Same-site restricted (not sent with cross-origin requests)</li>
+    </ul>
+    <p>A theme preference is stored in your browser's local storage (not a cookie) to remember your light/dark mode choice.</p>
+
+    <h3>8. Changes to This Policy</h3>
+    <p>We may update this policy from time to time. Changes will be reflected in the "Last updated" date above.</p>
+
+    <h3>9. Contact</h3>
+    <p>Questions about your privacy? Open an issue on <a href="https://github.com/dannymorris/casey/issues">GitHub</a>.</p>
+</article>
+{% endblock %}

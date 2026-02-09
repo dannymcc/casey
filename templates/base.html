@@ -790,7 +790,12 @@
     </main>
 
     <footer role="contentinfo">
-        <div class="container">
+        <div class="container" style="flex-direction: column; align-items: center; gap: 0.375rem;">
+            <div style="display: flex; gap: 1.25rem;">
+                <a href="/about" style="color: var(--text-muted); text-decoration: none; font-size: 12px; font-weight: 500;">About</a>
+                <a href="/terms" style="color: var(--text-muted); text-decoration: none; font-size: 12px; font-weight: 500;">Terms</a>
+                <a href="/privacy" style="color: var(--text-muted); text-decoration: none; font-size: 12px; font-weight: 500;">Privacy</a>
+            </div>
             <span>Casey v{{ config.VERSION }}</span>
         </div>
     </footer>

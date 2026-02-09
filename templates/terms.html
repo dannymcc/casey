@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Terms of Service - Casey{% endblock %}
+
+{% block extra_styles %}
+.legal-content {
+    max-width: 640px;
+    line-height: 1.85;
+    font-size: 14px;
+}
+
+.legal-content h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    margin-bottom: 0.5rem;
+}
+
+.legal-content h3 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.legal-content p {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.legal-content ul {
+    margin-bottom: 1rem;
+    margin-left: 1.25rem;
+    color: var(--text-secondary);
+}
+
+.legal-content ul li {
+    margin-bottom: 0.375rem;
+}
+
+.legal-content a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.legal-content a:hover { text-decoration: underline; }
+
+.legal-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+}
+{% endblock %}
+
+{% block content %}
+<article class="legal-content">
+    <h2>Terms of Service</h2>
+    <p class="legal-meta">Last updated: February 2026</p>
+
+    <h3>1. Acceptance of Terms</h3>
+    <p>By creating an account or using Casey, you agree to these Terms of Service. If you do not agree, please do not use the service.</p>
+
+    <h3>2. Description of Service</h3>
+    <p>Casey is a personal productivity application that provides journaling, task management, and idea tracking ("blips") features. The service is provided as-is and may be updated or modified at any time.</p>
+
+    <h3>3. Your Account</h3>
+    <p>You are responsible for maintaining the security of your account credentials. You must provide accurate information when creating your account. One person per account; shared accounts are not permitted.</p>
+
+    <h3>4. Your Data</h3>
+    <ul>
+        <li>You own all content you create in Casey (journal entries, tasks, blips).</li>
+        <li>You can export all your data at any time in JSON or CSV format.</li>
+        <li>You can delete your account and all associated data at any time from Settings.</li>
+        <li>We do not sell, share, or monetise your personal data.</li>
+    </ul>
+
+    <h3>5. Acceptable Use</h3>
+    <p>You agree not to:</p>
+    <ul>
+        <li>Use the service for any unlawful purpose</li>
+        <li>Attempt to gain unauthorised access to other users' data</li>
+        <li>Interfere with or disrupt the service infrastructure</li>
+        <li>Use automated tools to scrape or abuse the service</li>
+    </ul>
+
+    <h3>6. Service Availability</h3>
+    <p>We strive to keep Casey available and reliable, but we do not guarantee uninterrupted access. The service may be temporarily unavailable for maintenance or updates. We are not liable for any loss resulting from service interruptions.</p>
+
+    <h3>7. Termination</h3>
+    <p>You may delete your account at any time. We reserve the right to suspend or terminate accounts that violate these terms. Upon termination, your data will be permanently deleted.</p>
+
+    <h3>8. Limitation of Liability</h3>
+    <p>Casey is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, or consequential damages arising from your use of the service.</p>
+
+    <h3>9. Changes to Terms</h3>
+    <p>We may update these terms from time to time. Continued use of Casey after changes constitutes acceptance of the updated terms.</p>
+
+    <h3>10. Contact</h3>
+    <p>Questions about these terms? Open an issue on <a href="https://github.com/dannymorris/casey/issues">GitHub</a>.</p>
+</article>
+{% endblock %}
