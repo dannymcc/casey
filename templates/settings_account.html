@@ -34,6 +34,21 @@
                 <button type="submit">Update Password</button>
             </form>
         </div>
+
+        <div style="padding-top: 1.5rem; margin-top: 1.5rem; border-top: 1px solid var(--border-light);">
+            <div style="font-weight: 500; font-size: 14px; margin-bottom: 0.375rem; color: var(--danger);">Delete Account</div>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1rem;">
+                Permanently delete your account and all data. This cannot be undone.
+            </p>
+            <form method="POST" action="/settings/account/delete" onsubmit="return confirm('Are you sure you want to delete your account? All data will be permanently removed.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="form-group">
+                    <label for="delete_password">Confirm your password</label>
+                    <input type="password" id="delete_password" name="password" required>
+                </div>
+                <button type="submit" style="background: var(--danger); color: white;">Delete My Account</button>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

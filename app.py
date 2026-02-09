@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, g, session, flash, Response
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from functools import wraps
 from markupsafe import Markup
 import sqlite3
@@ -28,6 +28,7 @@ app.config['VERSION'] = os.environ.get('VERSION', 'dev')
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_DEBUG', 'False') != 'True'
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=30)
 
 # CSRF protection
 csrf = CSRFProtect(app)
@@ -145,6 +146,10 @@ def init_db():
 
     if 'user_id' not in columns:
         db.execute('ALTER TABLE blips ADD COLUMN user_id INTEGER')
+    if 'pinned' not in columns:
+        db.execute('ALTER TABLE blips ADD COLUMN pinned INTEGER DEFAULT 0')
+    if 'archived' not in columns:
+        db.execute('ALTER TABLE blips ADD COLUMN archived INTEGER DEFAULT 0')
 
     cursor = db.execute("PRAGMA table_info(tasks)")
     columns = [row[1] for row in cursor.fetchall()]
@@ -152,6 +157,8 @@ def init_db():
         db.execute('ALTER TABLE tasks ADD COLUMN user_id INTEGER')
     if 'due_date' not in columns:
         db.execute('ALTER TABLE tasks ADD COLUMN due_date TEXT')
+    if 'priority' not in columns:
+        db.execute('ALTER TABLE tasks ADD COLUMN priority INTEGER DEFAULT 0')
 
     cursor = db.execute("PRAGMA table_info(journal_entries)")
     columns = [row[1] for row in cursor.fetchall()]
@@ -353,6 +360,7 @@ def login():
         user = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
 
         if user and check_password_hash(user['password_hash'], password):
+            session.permanent = True
             session['user_id'] = user['id']
             session['username'] = user['username']
             return redirect(url_for('index'))
@@ -401,6 +409,7 @@ def register():
                             (username, password_hash))
         db.commit()
 
+        session.permanent = True
         session['user_id'] = cursor.lastrowid
         session['username'] = username
         return redirect(url_for('index'))
@@ -433,7 +442,8 @@ def index():
     # Get active tasks (due soonest first, then by creation)
     tasks = db.execute(
         f'''SELECT * FROM tasks WHERE completed = 0 AND {uf}
-            ORDER BY CASE WHEN due_date IS NOT NULL THEN 0 ELSE 1 END,
+            ORDER BY priority DESC,
+                     CASE WHEN due_date IS NOT NULL THEN 0 ELSE 1 END,
                      due_date ASC, created_at DESC''',
         uf_params
     ).fetchall()
@@ -451,7 +461,7 @@ def index():
         blip_uf, blip_uf_params = user_filter()
         # Weighted random: prefer less-surfaced and older-surfaced blips
         all_blips = db.execute(f'''
-            SELECT * FROM blips WHERE {blip_uf}
+            SELECT * FROM blips WHERE {blip_uf} AND (archived = 0 OR archived IS NULL)
         ''', blip_uf_params).fetchall()
         if all_blips:
             def blip_weight(b):
@@ -466,6 +476,8 @@ def index():
                         weight *= 2.0
                 else:
                     weight *= 3.0  # never surfaced gets high weight
+                if b['pinned']:
+                    weight *= 2.0  # pinned blips surface more often
                 return weight
             weights = [blip_weight(b) for b in all_blips]
             k = min(3, len(all_blips))
@@ -491,7 +503,7 @@ def index():
             )
         db.commit()
 
-    # Check if this is a brand-new user (for onboarding)
+    # Dashboard stats
     total_entries = db.execute(
         f'SELECT COUNT(*) FROM journal_entries WHERE {uf}', uf_params
     ).fetchone()[0]
@@ -501,14 +513,38 @@ def index():
     total_tasks = db.execute(
         f'SELECT COUNT(*) FROM tasks WHERE {uf}', uf_params
     ).fetchone()[0]
+    completed_tasks_count = db.execute(
+        f'SELECT COUNT(*) FROM tasks WHERE completed = 1 AND {uf}', uf_params
+    ).fetchone()[0]
     is_new_user = (total_entries + total_blips + total_tasks) == 0
+
+    # Calculate writing streak
+    streak = 0
+    check_date = date.today()
+    while True:
+        entry = db.execute(
+            f'SELECT id FROM journal_entries WHERE date = ? AND {uf}',
+            (check_date.isoformat(), *uf_params)
+        ).fetchone()
+        if entry:
+            streak += 1
+            check_date -= timedelta(days=1)
+        else:
+            break
 
     return render_template('index.html',
                            journal=journal,
                            tasks=tasks,
                            blips=daily_blips,
                            today=today,
-                           is_new_user=is_new_user)
+                           is_new_user=is_new_user,
+                           stats={
+                               'entries': total_entries,
+                               'active_tasks': len(tasks),
+                               'completed_tasks': completed_tasks_count,
+                               'blips': total_blips,
+                               'streak': streak,
+                           })
 
 
 @app.route('/journal/save', methods=['POST'])
@@ -589,11 +625,12 @@ def add_task():
     """Add new task."""
     title = request.form.get('title', '').strip()
     due_date = request.form.get('due_date', '').strip() or None
+    priority = request.form.get('priority', 0, type=int)
     if title:
         db = get_db()
         user_id = get_current_user_id()
-        db.execute('INSERT INTO tasks (title, user_id, due_date) VALUES (?, ?, ?)',
-                   (title, user_id, due_date))
+        db.execute('INSERT INTO tasks (title, user_id, due_date, priority) VALUES (?, ?, ?, ?)',
+                   (title, user_id, due_date, min(priority, 2)))
         db.commit()
 
     return redirect(url_for('index'))
@@ -639,16 +676,37 @@ def blips_list():
     db = get_db()
     uf, uf_params = user_filter()
     page = request.args.get('page', 1, type=int)
+    show = request.args.get('show', 'active')
     per_page = 50
     offset = (page - 1) * per_page
-    blips = db.execute(
-        f'SELECT * FROM blips WHERE {uf} ORDER BY created_at DESC LIMIT ? OFFSET ?',
-        (*uf_params, per_page + 1, offset)
-    ).fetchall()
+
+    if show == 'archived':
+        blips = db.execute(
+            f'SELECT * FROM blips WHERE (archived = 1) AND {uf} ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            (*uf_params, per_page + 1, offset)
+        ).fetchall()
+    elif show == 'pinned':
+        blips = db.execute(
+            f'SELECT * FROM blips WHERE (pinned = 1) AND (archived = 0 OR archived IS NULL) AND {uf} ORDER BY created_at DESC LIMIT ? OFFSET ?',
+            (*uf_params, per_page + 1, offset)
+        ).fetchall()
+    else:
+        blips = db.execute(
+            f'SELECT * FROM blips WHERE (archived = 0 OR archived IS NULL) AND {uf} ORDER BY pinned DESC, created_at DESC LIMIT ? OFFSET ?',
+            (*uf_params, per_page + 1, offset)
+        ).fetchall()
+
     has_more = len(blips) > per_page
     blips = blips[:per_page]
+    archived_count = db.execute(
+        f'SELECT COUNT(*) FROM blips WHERE archived = 1 AND {uf}', uf_params
+    ).fetchone()[0]
+    pinned_count = db.execute(
+        f'SELECT COUNT(*) FROM blips WHERE pinned = 1 AND (archived = 0 OR archived IS NULL) AND {uf}', uf_params
+    ).fetchone()[0]
 
-    return render_template('blips.html', blips=blips, page=page, has_more=has_more)
+    return render_template('blips.html', blips=blips, page=page, has_more=has_more,
+                           show=show, archived_count=archived_count, pinned_count=pinned_count)
 
 
 @app.route('/blips/add', methods=['POST'])
@@ -706,6 +764,71 @@ def delete_blip(blip_id):
     return redirect(url_for('blips_list'))
 
 
+@app.route('/blips/<int:blip_id>/pin', methods=['POST'])
+@login_required
+def pin_blip(blip_id):
+    """Toggle blip pinned state."""
+    db = get_db()
+    uf, uf_params = user_filter()
+    blip = db.execute(f'SELECT pinned FROM blips WHERE id = ? AND {uf}',
+                      (blip_id, *uf_params)).fetchone()
+    if blip:
+        new_state = 0 if blip['pinned'] else 1
+        db.execute('UPDATE blips SET pinned = ? WHERE id = ?', (new_state, blip_id))
+        db.commit()
+    return redirect(request.referrer or url_for('blips_list'))
+
+
+@app.route('/blips/<int:blip_id>/archive', methods=['POST'])
+@login_required
+def archive_blip(blip_id):
+    """Toggle blip archived state."""
+    db = get_db()
+    uf, uf_params = user_filter()
+    blip = db.execute(f'SELECT archived FROM blips WHERE id = ? AND {uf}',
+                      (blip_id, *uf_params)).fetchone()
+    if blip:
+        new_state = 0 if blip['archived'] else 1
+        db.execute('UPDATE blips SET archived = ? WHERE id = ?', (new_state, blip_id))
+        db.commit()
+    return redirect(request.referrer or url_for('blips_list'))
+
+
+@app.route('/blips/<int:blip_id>/to-task', methods=['POST'])
+@login_required
+def blip_to_task(blip_id):
+    """Convert a blip into a task."""
+    db = get_db()
+    uf, uf_params = user_filter()
+    blip = db.execute(f'SELECT * FROM blips WHERE id = ? AND {uf}',
+                      (blip_id, *uf_params)).fetchone()
+    if blip:
+        user_id = get_current_user_id()
+        db.execute('INSERT INTO tasks (title, user_id) VALUES (?, ?)',
+                   (blip['content'][:200], user_id))
+        db.commit()
+        flash('Blip converted to task.', 'success')
+    return redirect(url_for('blips_list'))
+
+
+@app.route('/blips/bulk-add', methods=['POST'])
+@login_required
+def bulk_add_blips():
+    """Add multiple blips at once, one per line."""
+    content = request.form.get('content', '')
+    user_id = get_current_user_id()
+    if content:
+        db = get_db()
+        lines = [line.strip() for line in content.splitlines() if line.strip()]
+        for line in lines:
+            db.execute('INSERT INTO blips (content, user_id) VALUES (?, ?)',
+                       (line, user_id))
+        db.commit()
+        if lines:
+            flash(f'Added {len(lines)} blip{"s" if len(lines) != 1 else ""}.', 'success')
+    return redirect(url_for('blips_list'))
+
+
 @app.route('/history')
 @login_required
 def history():
@@ -713,11 +836,23 @@ def history():
     db = get_db()
     uf, uf_params = user_filter()
     page = request.args.get('page', 1, type=int)
+    from_date = request.args.get('from', '')
+    to_date = request.args.get('to', '')
     per_page = 30
     offset = (page - 1) * per_page
+
+    date_filter = ''
+    date_params = list(uf_params)
+    if from_date:
+        date_filter += ' AND date >= ?'
+        date_params.append(from_date)
+    if to_date:
+        date_filter += ' AND date <= ?'
+        date_params.append(to_date)
+
     entries = db.execute(
-        f'SELECT * FROM journal_entries WHERE {uf} ORDER BY date DESC LIMIT ? OFFSET ?',
-        (*uf_params, per_page + 1, offset)
+        f'SELECT * FROM journal_entries WHERE {uf}{date_filter} ORDER BY date DESC LIMIT ? OFFSET ?',
+        (*date_params, per_page + 1, offset)
     ).fetchall()
     has_more = len(entries) > per_page
     entries = entries[:per_page]
@@ -742,7 +877,8 @@ def history():
             'blips_surfaced': blips_surfaced,
         })
 
-    return render_template('history.html', enriched=enriched, page=page, has_more=has_more)
+    return render_template('history.html', enriched=enriched, page=page, has_more=has_more,
+                           from_date=from_date, to_date=to_date)
 
 
 @app.route('/completed-tasks')
@@ -1004,6 +1140,88 @@ def change_password():
     db.commit()
     flash('Password updated successfully.', 'success')
     return redirect(url_for('settings_account'))
+
+
+@app.route('/settings/account/delete', methods=['POST'])
+@login_required
+def delete_account():
+    """Delete user account and all associated data."""
+    password = request.form.get('password', '')
+    db = get_db()
+    user = db.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    if not user or not check_password_hash(user['password_hash'], password):
+        flash('Incorrect password. Account not deleted.', 'error')
+        return redirect(url_for('settings_account'))
+
+    user_id = session['user_id']
+    db.execute('DELETE FROM daily_blips WHERE user_id = ?', (user_id,))
+    db.execute('DELETE FROM blips WHERE user_id = ?', (user_id,))
+    db.execute('DELETE FROM tasks WHERE user_id = ?', (user_id,))
+    db.execute('DELETE FROM journal_entries WHERE user_id = ?', (user_id,))
+    db.execute('DELETE FROM api_tokens WHERE user_id = ?', (user_id,))
+    db.execute('DELETE FROM users WHERE id = ?', (user_id,))
+    db.commit()
+    session.clear()
+    return redirect(url_for('login'))
+
+
+@app.route('/import/json', methods=['POST'])
+@login_required
+def import_json():
+    """Import data from a Casey JSON export."""
+    file = request.files.get('file')
+    if not file or not file.filename.endswith('.json'):
+        flash('Please upload a JSON file.', 'error')
+        return redirect(url_for('settings'))
+
+    try:
+        data = json.load(file)
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        flash('Invalid JSON file.', 'error')
+        return redirect(url_for('settings'))
+
+    db = get_db()
+    user_id = get_current_user_id()
+    imported = {'journal': 0, 'tasks': 0, 'blips': 0}
+
+    for entry in data.get('journal_entries', []):
+        existing = db.execute(
+            'SELECT id FROM journal_entries WHERE date = ? AND user_id = ?',
+            (entry.get('date'), user_id)
+        ).fetchone()
+        if not existing and entry.get('date') and entry.get('content'):
+            db.execute(
+                'INSERT INTO journal_entries (date, content, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+                (entry['date'], entry['content'], user_id,
+                 entry.get('created_at', datetime.now().isoformat()),
+                 entry.get('updated_at', datetime.now().isoformat()))
+            )
+            imported['journal'] += 1
+
+    for task in data.get('tasks', []):
+        if task.get('title'):
+            db.execute(
+                'INSERT INTO tasks (title, completed, due_date, user_id, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?)',
+                (task['title'], task.get('completed', 0), task.get('due_date'), user_id,
+                 task.get('created_at', datetime.now().isoformat()), task.get('completed_at'))
+            )
+            imported['tasks'] += 1
+
+    for blip in data.get('blips', []):
+        if blip.get('content'):
+            db.execute(
+                'INSERT INTO blips (content, user_id, created_at, updated_at, surface_count) VALUES (?, ?, ?, ?, ?)',
+                (blip['content'], user_id,
+                 blip.get('created_at', datetime.now().isoformat()),
+                 blip.get('updated_at', datetime.now().isoformat()),
+                 blip.get('surface_count', 0))
+            )
+            imported['blips'] += 1
+
+    db.commit()
+    total = imported['journal'] + imported['tasks'] + imported['blips']
+    flash(f'Imported {total} items ({imported["journal"]} entries, {imported["tasks"]} tasks, {imported["blips"]} blips).', 'success')
+    return redirect(url_for('settings'))
 
 
 # --- API Authentication ---

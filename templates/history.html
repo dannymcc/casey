@@ -75,6 +75,17 @@
     <h1 class="page-title">History</h1>
     <p class="page-desc">Journal entries and daily activity</p>
 
+    <form method="GET" action="/history" style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap;">
+        <label style="font-size: 12px; color: var(--text-muted); font-weight: 500;">From</label>
+        <input type="date" name="from" value="{{ from_date }}" style="width: auto; max-width: 140px; font-size: 12px; padding: 0.375rem 0.5rem;">
+        <label style="font-size: 12px; color: var(--text-muted); font-weight: 500;">To</label>
+        <input type="date" name="to" value="{{ to_date }}" style="width: auto; max-width: 140px; font-size: 12px; padding: 0.375rem 0.5rem;">
+        <button type="submit" style="font-size: 12px; padding: 0.375rem 0.75rem; min-height: auto;">Filter</button>
+        {% if from_date or to_date %}
+        <a href="/history" style="font-size: 12px; color: var(--text-muted); text-decoration: none; font-weight: 500;">Clear</a>
+        {% endif %}
+    </form>
+
     {% if enriched %}
         <div class="card">
             {% for item in enriched %}
@@ -104,7 +115,7 @@
             {% endfor %}
             {% if has_more %}
             <div style="text-align: center; padding-top: 1.5rem; border-top: 1px solid var(--border-light);">
-                <a href="?page={{ page + 1 }}" style="color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500;">Show older entries</a>
+                <a href="?page={{ page + 1 }}{% if from_date %}&from={{ from_date }}{% endif %}{% if to_date %}&to={{ to_date }}{% endif %}" style="color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500;">Show older entries</a>
             </div>
             {% endif %}
         </div>

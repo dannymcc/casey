@@ -115,6 +115,17 @@
 {% block content %}
 <div class="date-label">{{ today | uk_date_long }}</div>
 
+{% if not is_new_user and stats %}
+<div class="stats-bar">
+    <div class="stat-item"><span class="stat-value">{{ stats.entries }}</span> entries</div>
+    <div class="stat-item"><span class="stat-value">{{ stats.active_tasks }}</span> active tasks</div>
+    <div class="stat-item"><span class="stat-value">{{ stats.blips }}</span> blips</div>
+    {% if stats.streak > 0 %}
+    <div class="stat-item"><span class="stat-value accent">{{ stats.streak }}</span> day streak</div>
+    {% endif %}
+</div>
+{% endif %}
+
 {% if is_new_user %}
 <div class="card welcome">
     <h2>Welcome to Casey</h2>
@@ -190,6 +201,11 @@
                 <div class="task-input-row">
                     <input type="text" name="title" placeholder="Add a task..." required>
                     <input type="date" name="due_date" title="Due date (optional)">
+                    <select name="priority" title="Priority">
+                        <option value="0">Normal</option>
+                        <option value="1">Medium</option>
+                        <option value="2">High</option>
+                    </select>
                     <button type="submit">Add</button>
                 </div>
             </form>
@@ -205,6 +221,11 @@
                                        onchange="this.form.submit()">
                                 <span style="flex: 1; font-size: 14px;">
                                     {{ task.title }}
+                                    {% if task.priority == 2 %}
+                                        <span class="priority-badge high">High</span>
+                                    {% elif task.priority == 1 %}
+                                        <span class="priority-badge medium">Med</span>
+                                    {% endif %}
                                     {% if task.due_date %}
                                         <span class="due-badge {{ 'overdue' if task.due_date < today }}">{{ task.due_date | uk_date }}</span>
                                     {% endif %}

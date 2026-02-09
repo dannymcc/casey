@@ -133,6 +133,18 @@ a.settings-row:hover {
             </div>
         </div>
 
+        <div class="settings-row">
+            <div style="flex: 1;">
+                <div class="settings-label">Import Data</div>
+                <div class="settings-desc">Restore from a Casey JSON export</div>
+                <form method="POST" action="/import/json" enctype="multipart/form-data" style="margin-top: 0.375rem; display: flex; gap: 0.5rem; align-items: center;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="file" name="file" accept=".json" required style="font-size: 12px; color: var(--text-secondary);">
+                    <button type="submit" style="font-size: 12px; padding: 0.375rem 0.75rem; min-height: auto;">Import</button>
+                </form>
+            </div>
+        </div>
+
         <a href="/about" class="settings-row">
             <div>
                 <div class="settings-label">About Casey</div>

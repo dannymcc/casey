@@ -30,14 +30,32 @@
     <h1 class="page-title">Blips</h1>
     <p class="page-desc">Ongoing topics, questions, or ideas you're tracking.</p>
 
-    <div class="card" style="margin-bottom: 1.5rem;">
+    <div class="card" style="margin-bottom: 1rem;">
         <form method="POST" action="/blips/add">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <textarea name="content" rows="3" placeholder="A thought, question, or idea to track..." required style="min-height: 72px;"></textarea>
-            <div style="margin-top: 0.625rem;">
+            <div style="margin-top: 0.625rem; display: flex; gap: 0.5rem; align-items: center;">
                 <button type="submit">Add Blip</button>
+                <button type="button" class="btn-secondary" style="font-size: 12px;" onclick="document.getElementById('bulk-form').style.display = document.getElementById('bulk-form').style.display === 'none' ? 'block' : 'none'">Bulk Add</button>
             </div>
         </form>
+    </div>
+
+    <div id="bulk-form" class="card" style="margin-bottom: 1rem; display: none;">
+        <form method="POST" action="/blips/bulk-add">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 0.5rem;">One blip per line</div>
+            <textarea name="content" rows="6" placeholder="First blip&#10;Second blip&#10;Third blip..." required style="min-height: 100px;"></textarea>
+            <div style="margin-top: 0.625rem;">
+                <button type="submit">Add All</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="filter-tabs">
+        <a href="/blips" class="filter-tab {{ 'active' if show == 'active' }}">Active</a>
+        {% if pinned_count %}<a href="/blips?show=pinned" class="filter-tab {{ 'active' if show == 'pinned' }}">Pinned ({{ pinned_count }})</a>{% endif %}
+        {% if archived_count %}<a href="/blips?show=archived" class="filter-tab {{ 'active' if show == 'archived' }}">Archived ({{ archived_count }})</a>{% endif %}
     </div>
 
     {% if blips %}
@@ -45,7 +63,7 @@
             <div class="blip" style="margin-bottom: 0.375rem;">
                 <div class="blip-row">
                     <div style="flex: 1; min-width: 0;">
-                        <div style="white-space: pre-wrap;">{{ blip.content }}</div>
+                        <div style="white-space: pre-wrap;">{% if blip.pinned %}<span class="pin-icon" title="Pinned">&#9733;</span>{% endif %}{{ blip.content }}</div>
                         <div class="blip-meta">
                             {% if blip.updated_at and blip.updated_at != blip.created_at %}
                                 Updated {{ blip.updated_at | uk_date }}
@@ -60,7 +78,19 @@
                         </div>
                     </div>
                     <div class="blip-actions">
+                        <form method="POST" action="/blips/{{ blip.id }}/pin" style="margin: 0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn-ghost" style="font-size: 12px; min-height: auto;" title="{{ 'Unpin' if blip.pinned else 'Pin' }}">{{ '&#9733;' if blip.pinned else '&#9734;' }}</button>
+                        </form>
+                        <form method="POST" action="/blips/{{ blip.id }}/to-task" style="margin: 0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn-ghost" style="font-size: 12px; min-height: auto;" title="Convert to task">&rarr; Task</button>
+                        </form>
                         <a href="/blips/{{ blip.id }}/edit" class="btn-ghost" style="text-decoration: none; font-size: 12px;">Edit</a>
+                        <form method="POST" action="/blips/{{ blip.id }}/archive" style="margin: 0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn-ghost" style="font-size: 12px; min-height: auto;" title="{{ 'Unarchive' if blip.archived else 'Archive' }}">{{ 'Restore' if blip.archived else 'Archive' }}</button>
+                        </form>
                         <form method="POST" action="/blips/{{ blip.id }}/delete" style="margin: 0;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <button type="submit" class="btn-ghost btn-danger" style="font-size: 14px; min-height: auto; line-height: 1;">&times;</button>
@@ -71,12 +101,18 @@
         {% endfor %}
         {% if has_more %}
         <div style="text-align: center; margin-top: 1rem;">
-            <a href="?page={{ page + 1 }}" style="color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500;">Show more</a>
+            <a href="?show={{ show }}&page={{ page + 1 }}" style="color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500;">Show more</a>
         </div>
         {% endif %}
     {% else %}
         <div class="empty-state">
-            No blips yet. Add your first thought above.
+            {% if show == 'archived' %}
+                No archived blips.
+            {% elif show == 'pinned' %}
+                No pinned blips.
+            {% else %}
+                No blips yet. Add your first thought above.
+            {% endif %}
         </div>
     {% endif %}
 </div>
