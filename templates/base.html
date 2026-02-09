@@ -355,12 +355,12 @@
             }
             
             .container {
-                padding: 1.5rem 1rem;
+                padding: 1rem 0.75rem;
             }
             
             header {
-                padding: 1rem 0;
-                margin-bottom: 1.5rem;
+                padding: 0.75rem 0;
+                margin-bottom: 1rem;
             }
             
             header .container {
@@ -377,8 +377,8 @@
             
             nav a {
                 white-space: nowrap;
-                padding: 0.5rem 1rem;
-                font-size: 14px;
+                padding: 0.5rem 0.75rem;
+                font-size: 13px;
             }
             
             /* Hide "Completed" link on mobile, show "More" dropdown */
@@ -391,27 +391,33 @@
             }
             
             .card {
-                padding: 1.25rem;
+                padding: 1rem;
                 border-radius: 8px;
+                margin-bottom: 1rem;
             }
             
             .card h2 {
-                font-size: 1rem;
+                font-size: 0.9375rem;
+                margin-bottom: 1rem;
             }
             
             textarea, input[type="text"] {
-                padding: 0.875rem;
+                padding: 0.75rem;
                 font-size: 16px;
             }
             
+            textarea {
+                min-height: 150px;
+            }
+            
             button, .btn {
-                padding: 0.75rem 1rem;
-                font-size: 15px;
+                padding: 0.625rem 1rem;
+                font-size: 14px;
                 min-height: 44px;
             }
             
             .task-item {
-                padding: 1rem 0;
+                padding: 0.75rem 0;
             }
             
             .task-item input[type="checkbox"] {
@@ -420,35 +426,71 @@
             }
             
             .date-header {
-                font-size: 12px;
+                font-size: 11px;
+                margin-bottom: 1rem;
             }
             
             .blip {
-                padding: 0.875rem;
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .blip-meta {
+                font-size: 11px;
+                margin-top: 0.375rem;
             }
         }
         
         @media (max-width: 480px) {
             header h1 {
-                font-size: 1.125rem;
+                font-size: 1rem;
             }
             
             .container {
-                padding: 1rem 0.75rem;
+                padding: 0.75rem 0.5rem;
+            }
+            
+            header {
+                padding: 0.5rem 0;
+                margin-bottom: 0.75rem;
             }
             
             .card {
-                padding: 1rem;
-                margin-bottom: 1rem;
+                padding: 0.875rem;
+                margin-bottom: 0.875rem;
+            }
+            
+            .card h2 {
+                font-size: 0.875rem;
+                margin-bottom: 0.875rem;
             }
             
             nav a {
-                padding: 0.5rem 0.75rem;
-                font-size: 13px;
+                padding: 0.5rem 0.625rem;
+                font-size: 12px;
             }
             
             .nav-more-btn {
-                padding: 0.5rem 0.75rem;
+                padding: 0.5rem 0.625rem;
+                font-size: 12px;
+            }
+            
+            textarea {
+                min-height: 120px;
+                padding: 0.625rem;
+            }
+            
+            .date-header {
+                font-size: 10px;
+                margin-bottom: 0.75rem;
+            }
+            
+            .blip {
+                padding: 0.625rem;
+                margin-bottom: 0.625rem;
+            }
+            
+            button, .btn {
                 font-size: 13px;
             }
         }
