@@ -22,27 +22,6 @@ DATABASE = os.path.join(DATA_DIR, 'casey.db')
 API_KEY_FILE = os.path.join(DATA_DIR, '.api_key')
 
 
-def _load_or_create_api_key():
-    """Load API key from file, or create and persist a new one."""
-    env_key = os.environ.get('API_KEY')
-    if env_key:
-        return env_key
-    try:
-        with open(API_KEY_FILE, 'r') as f:
-            key = f.read().strip()
-            if key:
-                return key
-    except FileNotFoundError:
-        pass
-    key = secrets.token_urlsafe(32)
-    with open(API_KEY_FILE, 'w') as f:
-        f.write(key)
-    return key
-
-
-app.config['API_KEY'] = _load_or_create_api_key()
-
-
 # --- Database ---
 
 def get_db():
@@ -115,6 +94,16 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id),
             UNIQUE(journal_date, blip_id, user_id)
         );
+
+        CREATE TABLE IF NOT EXISTS api_tokens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            name TEXT NOT NULL,
+            token TEXT NOT NULL UNIQUE,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_used_at TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        );
     ''')
 
     # Migrations for existing databases
@@ -149,6 +138,28 @@ def init_db():
     # Check if old unique constraint needs updating -- for new installs this is
     # handled by CREATE TABLE. For existing DBs, the old UNIQUE(journal_date, blip_id)
     # still works since user_id will be NULL for legacy data.
+
+    # Migrate old single API key into api_tokens table
+    token_count = db.execute('SELECT COUNT(*) FROM api_tokens').fetchone()[0]
+    if token_count == 0:
+        old_key = None
+        env_key = os.environ.get('API_KEY')
+        if env_key:
+            old_key = env_key
+        else:
+            try:
+                with open(API_KEY_FILE, 'r') as f:
+                    key = f.read().strip()
+                    if key:
+                        old_key = key
+            except FileNotFoundError:
+                pass
+        if old_key:
+            db.execute('INSERT INTO api_tokens (name, token) VALUES (?, ?)',
+                       ('Default', old_key))
+        else:
+            db.execute('INSERT INTO api_tokens (name, token) VALUES (?, ?)',
+                       ('Default', secrets.token_urlsafe(32)))
 
     db.commit()
     db.close()
@@ -446,12 +457,17 @@ def blips_list():
     """View all blips."""
     db = get_db()
     uf, uf_params = user_filter()
+    page = request.args.get('page', 1, type=int)
+    per_page = 50
+    offset = (page - 1) * per_page
     blips = db.execute(
-        f'SELECT * FROM blips WHERE {uf} ORDER BY created_at DESC',
-        uf_params
+        f'SELECT * FROM blips WHERE {uf} ORDER BY created_at DESC LIMIT ? OFFSET ?',
+        (*uf_params, per_page + 1, offset)
     ).fetchall()
+    has_more = len(blips) > per_page
+    blips = blips[:per_page]
 
-    return render_template('blips.html', blips=blips)
+    return render_template('blips.html', blips=blips, page=page, has_more=has_more)
 
 
 @app.route('/blips/add', methods=['POST'])
@@ -515,12 +531,17 @@ def history():
     """View journal history."""
     db = get_db()
     uf, uf_params = user_filter()
+    page = request.args.get('page', 1, type=int)
+    per_page = 30
+    offset = (page - 1) * per_page
     entries = db.execute(
-        f'SELECT * FROM journal_entries WHERE {uf} ORDER BY date DESC LIMIT 30',
-        uf_params
+        f'SELECT * FROM journal_entries WHERE {uf} ORDER BY date DESC LIMIT ? OFFSET ?',
+        (*uf_params, per_page + 1, offset)
     ).fetchall()
+    has_more = len(entries) > per_page
+    entries = entries[:per_page]
 
-    return render_template('history.html', entries=entries)
+    return render_template('history.html', entries=entries, page=page, has_more=has_more)
 
 
 @app.route('/completed-tasks')
@@ -529,12 +550,17 @@ def completed_tasks():
     """View completed tasks."""
     db = get_db()
     uf, uf_params = user_filter()
+    page = request.args.get('page', 1, type=int)
+    per_page = 50
+    offset = (page - 1) * per_page
     tasks = db.execute(
-        f'SELECT * FROM tasks WHERE completed = 1 AND {uf} ORDER BY completed_at DESC LIMIT 50',
-        uf_params
+        f'SELECT * FROM tasks WHERE completed = 1 AND {uf} ORDER BY completed_at DESC LIMIT ? OFFSET ?',
+        (*uf_params, per_page + 1, offset)
     ).fetchall()
+    has_more = len(tasks) > per_page
+    tasks = tasks[:per_page]
 
-    return render_template('completed_tasks.html', tasks=tasks)
+    return render_template('completed_tasks.html', tasks=tasks, page=page, has_more=has_more)
 
 
 @app.route('/about')
@@ -560,7 +586,89 @@ def settings():
 @login_required
 def settings_api():
     """API settings page."""
-    return render_template('settings_api.html', api_key=app.config['API_KEY'])
+    db = get_db()
+    user_id = get_current_user_id()
+    if user_id is not None:
+        tokens = db.execute('SELECT * FROM api_tokens WHERE user_id = ? ORDER BY created_at DESC', (user_id,)).fetchall()
+    else:
+        tokens = db.execute('SELECT * FROM api_tokens WHERE user_id IS NULL ORDER BY created_at DESC').fetchall()
+    new_token = session.pop('new_token', None)
+    return render_template('settings_api.html', tokens=tokens, new_token=new_token)
+
+
+@app.route('/settings/api/tokens/create', methods=['POST'])
+@login_required
+def create_api_token():
+    """Create a new API token."""
+    name = request.form.get('name', '').strip()
+    if not name:
+        name = 'Untitled'
+    token = secrets.token_urlsafe(32)
+    user_id = get_current_user_id()
+    db = get_db()
+    db.execute('INSERT INTO api_tokens (user_id, name, token) VALUES (?, ?, ?)',
+               (user_id, name, token))
+    db.commit()
+    session['new_token'] = token
+    flash('Token created successfully.', 'success')
+    return redirect(url_for('settings_api'))
+
+
+@app.route('/settings/api/tokens/<int:token_id>/revoke', methods=['POST'])
+@login_required
+def revoke_api_token(token_id):
+    """Revoke an API token."""
+    db = get_db()
+    uf, uf_params = user_filter()
+    db.execute(f'DELETE FROM api_tokens WHERE id = ? AND {uf}', (token_id, *uf_params))
+    db.commit()
+    flash('Token revoked.', 'success')
+    return redirect(url_for('settings_api'))
+
+
+@app.route('/settings/account')
+@login_required
+def settings_account():
+    """Account settings page."""
+    if not app.config['AUTH_ENABLED']:
+        return redirect(url_for('settings'))
+    return render_template('settings_account.html')
+
+
+@app.route('/settings/account/change-password', methods=['POST'])
+@login_required
+def change_password():
+    """Change user password."""
+    if not app.config['AUTH_ENABLED']:
+        return redirect(url_for('settings'))
+
+    current_password = request.form.get('current_password', '')
+    new_password = request.form.get('new_password', '')
+    confirm_password = request.form.get('confirm_password', '')
+
+    if not current_password or not new_password:
+        flash('Please fill in all fields.', 'error')
+        return redirect(url_for('settings_account'))
+
+    if len(new_password) < 6:
+        flash('New password must be at least 6 characters.', 'error')
+        return redirect(url_for('settings_account'))
+
+    if new_password != confirm_password:
+        flash('New passwords do not match.', 'error')
+        return redirect(url_for('settings_account'))
+
+    db = get_db()
+    user = db.execute('SELECT * FROM users WHERE id = ?', (session['user_id'],)).fetchone()
+    if not user or not check_password_hash(user['password_hash'], current_password):
+        flash('Current password is incorrect.', 'error')
+        return redirect(url_for('settings_account'))
+
+    db.execute('UPDATE users SET password_hash = ? WHERE id = ?',
+               (generate_password_hash(new_password), session['user_id']))
+    db.commit()
+    flash('Password updated successfully.', 'success')
+    return redirect(url_for('settings_account'))
 
 
 # --- API Authentication ---
@@ -569,8 +677,16 @@ def require_api_key(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         api_key = request.headers.get('X-API-Key')
-        if not api_key or not secrets.compare_digest(api_key, app.config['API_KEY']):
+        if not api_key:
             return jsonify({'error': 'Invalid or missing API key'}), 401
+        db = get_db()
+        token_row = db.execute('SELECT * FROM api_tokens WHERE token = ?', (api_key,)).fetchone()
+        if not token_row:
+            return jsonify({'error': 'Invalid or missing API key'}), 401
+        db.execute('UPDATE api_tokens SET last_used_at = ? WHERE id = ?',
+                   (datetime.now().isoformat(), token_row['id']))
+        db.commit()
+        g.api_token = token_row
         return f(*args, **kwargs)
     return decorated_function
 

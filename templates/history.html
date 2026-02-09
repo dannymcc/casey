@@ -33,7 +33,7 @@
 {% block content %}
 <div style="max-width: 680px;">
     <h1 class="page-title">History</h1>
-    <p class="page-desc">Last 30 days of journal entries</p>
+    <p class="page-desc">Journal entries</p>
 
     {% if entries %}
         <div class="card">
@@ -43,6 +43,11 @@
                     <div class="history-content">{{ entry.content }}</div>
                 </div>
             {% endfor %}
+            {% if has_more %}
+            <div style="text-align: center; padding-top: 1.5rem; border-top: 1px solid var(--border-light);">
+                <a href="?page={{ page + 1 }}" style="color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500;">Show older entries</a>
+            </div>
+            {% endif %}
         </div>
     {% else %}
         <div class="empty-state">

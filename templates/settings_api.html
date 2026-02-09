@@ -3,23 +3,51 @@
 {% block title %}API Settings - Casey{% endblock %}
 
 {% block extra_styles %}
-.api-key-box {
+.token-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
     background: var(--bg);
     border-radius: var(--radius-sm);
-    padding: 1.25rem;
+    margin-bottom: 0.375rem;
+}
+
+.token-info {
+    min-width: 0;
+    flex: 1;
+}
+
+.token-name {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 0.125rem;
+}
+
+.token-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.token-preview {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-right: 0.75rem;
+    white-space: nowrap;
+}
+
+.new-token-box {
+    background: var(--success-bg);
+    border-radius: var(--radius-sm);
+    padding: 1rem 1.25rem;
     margin-bottom: 1.5rem;
 }
 
-.api-key-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 0.5rem;
-}
-
-.api-key-value {
+.new-token-box code {
     font-family: var(--mono);
     font-size: 12px;
     color: var(--text);
@@ -29,11 +57,7 @@
     padding: 0.625rem 0.75rem;
     border-radius: var(--radius-xs);
     border: 1px solid var(--border);
-}
-
-.api-key-hint {
-    font-size: 12px;
-    color: var(--text-muted);
+    display: block;
     margin-top: 0.5rem;
 }
 
@@ -70,18 +94,47 @@
     <div class="card">
         <h2>API Settings</h2>
         <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 14px;">
-            Use your API key to access Casey programmatically.
+            Create and manage personal access tokens for the Casey API.
         </p>
 
-        <div class="api-key-box">
-            <div class="api-key-label">Your API Key</div>
-            <code class="api-key-value">{{ api_key }}</code>
-            <div class="api-key-hint">
-                Include in the <code style="font-family: var(--mono); font-size: 11px;">X-API-Key</code> header.
-            </div>
+        {% if new_token %}
+        <div class="new-token-box">
+            <div style="font-weight: 500; font-size: 13px; color: var(--success); margin-bottom: 0.25rem;">Token created</div>
+            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 0.5rem;">Copy it now — you won't be able to see it again.</div>
+            <code>{{ new_token }}</code>
+        </div>
+        {% endif %}
+
+        <div style="margin-bottom: 1.5rem;">
+            <div style="font-weight: 500; font-size: 14px; margin-bottom: 0.75rem;">Create a token</div>
+            <form method="POST" action="/settings/api/tokens/create" style="display: flex; gap: 0.5rem;">
+                <input type="text" name="name" placeholder="Token name (e.g. CLI, Shortcuts)" style="flex: 1;">
+                <button type="submit">Create</button>
+            </form>
         </div>
 
+        {% if tokens %}
         <div style="padding-top: 1rem; border-top: 1px solid var(--border-light);">
+            <div style="font-weight: 500; font-size: 14px; margin-bottom: 0.75rem;">Your tokens</div>
+            {% for token in tokens %}
+            <div class="token-row">
+                <div class="token-info">
+                    <div class="token-name">{{ token.name }}</div>
+                    <div class="token-meta">
+                        <span>Created {{ token.created_at | uk_date }}</span>
+                        <span>{{ 'Last used ' + (token.last_used_at | uk_date) if token.last_used_at else 'Never used' }}</span>
+                    </div>
+                </div>
+                <span class="token-preview">...{{ token.token[-4:] }}</span>
+                <form method="POST" action="/settings/api/tokens/{{ token.id }}/revoke" style="margin: 0;">
+                    <button type="submit" class="btn-ghost btn-danger" style="font-size: 12px; min-height: auto;">Revoke</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
             <a href="/api" style="color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500;">
                 View API Documentation &rsaquo;
             </a>
@@ -90,8 +143,9 @@
         <div style="margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--border-light);">
             <div style="font-weight: 500; font-size: 14px; margin-bottom: 0.5rem;">Security</div>
             <ul class="security-list">
-                <li>Never commit your API key to version control</li>
-                <li>Store it securely as an environment variable</li>
+                <li>Never commit tokens to version control</li>
+                <li>Store tokens securely as environment variables</li>
+                <li>Revoke tokens you no longer need</li>
                 <li>Use HTTPS for all API requests</li>
             </ul>
         </div>

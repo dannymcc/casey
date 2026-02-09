@@ -48,7 +48,7 @@
 {% block content %}
 <div style="max-width: 680px;">
     <h1 class="page-title">Completed</h1>
-    <p class="page-desc">Last 50 completed tasks</p>
+    <p class="page-desc">Completed tasks</p>
 
     {% if tasks %}
         <div class="card">
@@ -61,6 +61,11 @@
                     <span class="completed-date">{{ task.completed_at | uk_date if task.completed_at else '' }}</span>
                 </div>
             {% endfor %}
+            {% if has_more %}
+            <div style="text-align: center; padding-top: 0.75rem;">
+                <a href="?page={{ page + 1 }}" style="color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500;">Show more</a>
+            </div>
+            {% endif %}
         </div>
     {% else %}
         <div class="empty-state">No completed tasks yet.</div>

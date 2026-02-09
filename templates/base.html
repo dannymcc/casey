@@ -472,18 +472,13 @@
         footer .container {
             display: flex;
             justify-content: center;
-            gap: 1.5rem;
         }
 
-        footer a {
+        footer span {
             color: var(--text-muted);
-            text-decoration: none;
             font-size: 12px;
             font-weight: 500;
-            transition: color 0.15s;
         }
-
-        footer a:hover { color: var(--text-secondary); }
 
         /* Back link */
         .back-link {
@@ -561,8 +556,7 @@
 
     <footer>
         <div class="container">
-            <a href="/about">About</a>
-            <a href="/api">API</a>
+            <span>Casey v{{ config.VERSION }}</span>
         </div>
     </footer>
 

@@ -53,18 +53,39 @@ a.settings-row:hover {
     <p class="page-desc">Manage your Casey configuration</p>
 
     <div class="card">
+        {% if auth_enabled %}
+        <a href="/settings/account" class="settings-row">
+            <div>
+                <div class="settings-label">Account</div>
+                <div class="settings-desc">Signed in as {{ current_user }}</div>
+            </div>
+            <span class="settings-arrow">&rsaquo;</span>
+        </a>
+        {% endif %}
+
         <div class="settings-row">
             <div>
                 <div class="settings-label">Version</div>
-                <div class="settings-desc">Current build</div>
+                <div class="settings-desc">v{{ version }}</div>
+                <div style="margin-top: 0.375rem; display: flex; gap: 0.75rem;">
+                    <a href="https://github.com/dannymorris/casey" style="color: var(--accent); text-decoration: none; font-size: 12px; font-weight: 500;">GitHub</a>
+                    <a href="https://github.com/dannymorris/casey/issues" style="color: var(--accent); text-decoration: none; font-size: 12px; font-weight: 500;">Issues</a>
+                </div>
             </div>
-            <span class="settings-value">v{{ version }}</span>
         </div>
 
         <a href="/settings/api" class="settings-row">
             <div>
                 <div class="settings-label">API Settings</div>
-                <div class="settings-desc">Manage API keys and access</div>
+                <div class="settings-desc">Manage personal access tokens</div>
+            </div>
+            <span class="settings-arrow">&rsaquo;</span>
+        </a>
+
+        <a href="/about" class="settings-row">
+            <div>
+                <div class="settings-label">About Casey</div>
+                <div class="settings-desc">The story behind the app</div>
             </div>
             <span class="settings-arrow">&rsaquo;</span>
         </a>

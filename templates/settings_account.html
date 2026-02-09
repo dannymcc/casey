@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Account - Casey{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px;">
+    <a href="/settings" class="back-link">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12L6 8l4-4"/></svg>
+        Back to Settings
+    </a>
+
+    <div class="card">
+        <h2>Account</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 14px;">
+            Signed in as <strong>{{ current_user }}</strong>
+        </p>
+
+        <div style="padding-top: 1rem; border-top: 1px solid var(--border-light);">
+            <div style="font-weight: 500; font-size: 14px; margin-bottom: 1rem;">Change Password</div>
+            <form method="POST" action="/settings/account/change-password">
+                <div class="form-group">
+                    <label for="current_password">Current password</label>
+                    <input type="password" id="current_password" name="current_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new_password">New password</label>
+                    <input type="password" id="new_password" name="new_password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm_password">Confirm new password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+                <button type="submit">Update Password</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

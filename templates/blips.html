@@ -67,6 +67,11 @@
                 </div>
             </div>
         {% endfor %}
+        {% if has_more %}
+        <div style="text-align: center; margin-top: 1rem;">
+            <a href="?page={{ page + 1 }}" style="color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500;">Show more</a>
+        </div>
+        {% endif %}
     {% else %}
         <div class="empty-state">
             No blips yet. Add your first thought above.
