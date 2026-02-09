@@ -1,11 +1,14 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 from datetime import datetime, date
+from functools import wraps
 import sqlite3
 import random
 import os
+import secrets
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+app.config['API_KEY'] = os.environ.get('API_KEY', secrets.token_urlsafe(32))
 
 # Ensure data directory exists
 DATA_DIR = 'data'
@@ -236,6 +239,162 @@ def completed_tasks():
 def about():
     """About page"""
     return render_template('about.html')
+
+@app.route('/api')
+def api_docs():
+    """API documentation"""
+    return render_template('api.html', api_key=app.config['API_KEY'])
+
+# API Authentication
+def require_api_key(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        api_key = request.headers.get('X-API-Key')
+        if not api_key or api_key != app.config['API_KEY']:
+            return jsonify({'error': 'Invalid or missing API key'}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+# API Endpoints
+@app.route('/api/journal', methods=['GET'])
+@require_api_key
+def api_get_journal():
+    """Get journal entries"""
+    limit = request.args.get('limit', 30, type=int)
+    db = get_db()
+    entries = db.execute('SELECT * FROM journal_entries ORDER BY date DESC LIMIT ?', (limit,)).fetchall()
+    db.close()
+    
+    return jsonify({
+        'entries': [dict(entry) for entry in entries]
+    })
+
+@app.route('/api/journal/<date_str>', methods=['GET', 'POST'])
+@require_api_key
+def api_journal_entry(date_str):
+    """Get or create journal entry for a specific date"""
+    db = get_db()
+    
+    if request.method == 'POST':
+        content = request.json.get('content', '')
+        db.execute('''
+            INSERT INTO journal_entries (date, content, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(date) DO UPDATE SET
+                content = excluded.content,
+                updated_at = excluded.updated_at
+        ''', (date_str, content, datetime.now().isoformat()))
+        db.commit()
+        entry = db.execute('SELECT * FROM journal_entries WHERE date = ?', (date_str,)).fetchone()
+        db.close()
+        return jsonify({'entry': dict(entry)})
+    
+    entry = db.execute('SELECT * FROM journal_entries WHERE date = ?', (date_str,)).fetchone()
+    db.close()
+    
+    if entry:
+        return jsonify({'entry': dict(entry)})
+    return jsonify({'error': 'Entry not found'}), 404
+
+@app.route('/api/tasks', methods=['GET', 'POST'])
+@require_api_key
+def api_tasks():
+    """Get all tasks or create a new task"""
+    db = get_db()
+    
+    if request.method == 'POST':
+        title = request.json.get('title', '').strip()
+        if not title:
+            return jsonify({'error': 'Title is required'}), 400
+        
+        cursor = db.execute('INSERT INTO tasks (title) VALUES (?)', (title,))
+        task_id = cursor.lastrowid
+        db.commit()
+        
+        task = db.execute('SELECT * FROM tasks WHERE id = ?', (task_id,)).fetchone()
+        db.close()
+        return jsonify({'task': dict(task)}), 201
+    
+    completed = request.args.get('completed', type=int)
+    if completed is not None:
+        tasks = db.execute('SELECT * FROM tasks WHERE completed = ? ORDER BY created_at DESC', (completed,)).fetchall()
+    else:
+        tasks = db.execute('SELECT * FROM tasks ORDER BY created_at DESC').fetchall()
+    
+    db.close()
+    return jsonify({'tasks': [dict(task) for task in tasks]})
+
+@app.route('/api/tasks/<int:task_id>', methods=['GET', 'PUT', 'DELETE'])
+@require_api_key
+def api_task(task_id):
+    """Get, update, or delete a specific task"""
+    db = get_db()
+    
+    if request.method == 'DELETE':
+        db.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+        db.commit()
+        db.close()
+        return jsonify({'success': True})
+    
+    if request.method == 'PUT':
+        data = request.json
+        if 'completed' in data:
+            completed_at = datetime.now().isoformat() if data['completed'] else None
+            db.execute('UPDATE tasks SET completed = ?, completed_at = ? WHERE id = ?',
+                      (data['completed'], completed_at, task_id))
+        if 'title' in data:
+            db.execute('UPDATE tasks SET title = ? WHERE id = ?', (data['title'], task_id))
+        db.commit()
+    
+    task = db.execute('SELECT * FROM tasks WHERE id = ?', (task_id,)).fetchone()
+    db.close()
+    
+    if task:
+        return jsonify({'task': dict(task)})
+    return jsonify({'error': 'Task not found'}), 404
+
+@app.route('/api/blips', methods=['GET', 'POST'])
+@require_api_key
+def api_blips():
+    """Get all blips or create a new blip"""
+    db = get_db()
+    
+    if request.method == 'POST':
+        content = request.json.get('content', '').strip()
+        if not content:
+            return jsonify({'error': 'Content is required'}), 400
+        
+        cursor = db.execute('INSERT INTO blips (content) VALUES (?)', (content,))
+        blip_id = cursor.lastrowid
+        db.commit()
+        
+        blip = db.execute('SELECT * FROM blips WHERE id = ?', (blip_id,)).fetchone()
+        db.close()
+        return jsonify({'blip': dict(blip)}), 201
+    
+    blips = db.execute('SELECT * FROM blips ORDER BY created_at DESC').fetchall()
+    db.close()
+    return jsonify({'blips': [dict(blip) for blip in blips]})
+
+@app.route('/api/blips/<int:blip_id>', methods=['GET', 'DELETE'])
+@require_api_key
+def api_blip(blip_id):
+    """Get or delete a specific blip"""
+    db = get_db()
+    
+    if request.method == 'DELETE':
+        db.execute('DELETE FROM daily_blips WHERE blip_id = ?', (blip_id,))
+        db.execute('DELETE FROM blips WHERE id = ?', (blip_id,))
+        db.commit()
+        db.close()
+        return jsonify({'success': True})
+    
+    blip = db.execute('SELECT * FROM blips WHERE id = ?', (blip_id,)).fetchone()
+    db.close()
+    
+    if blip:
+        return jsonify({'blip': dict(blip)})
+    return jsonify({'error': 'Blip not found'}), 404
 
 if __name__ == '__main__':
     init_db()
