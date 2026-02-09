@@ -777,7 +777,8 @@ def index():
     completed_tasks_count = db.execute(
         f'SELECT COUNT(*) FROM tasks WHERE completed = 1 AND {uf}', uf_params
     ).fetchone()[0]
-    is_new_user = (total_entries + total_blips + total_tasks) == 0
+    welcome_dismissed = get_preference(get_current_user_id(), 'welcome_dismissed') == '1'
+    is_new_user = (total_entries + total_blips + total_tasks) == 0 and not welcome_dismissed
 
     # Calculate writing streak
     streak = 0
@@ -810,6 +811,14 @@ def index():
                                'blips': total_blips,
                                'streak': streak,
                            })
+
+
+@app.route('/dismiss-welcome', methods=['POST'])
+@login_required
+def dismiss_welcome():
+    """Dismiss the welcome card permanently."""
+    set_preference(get_current_user_id(), 'welcome_dismissed', '1')
+    return redirect(url_for('index'))
 
 
 @app.route('/journal/save', methods=['POST'])

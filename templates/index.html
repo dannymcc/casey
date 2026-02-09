@@ -263,9 +263,10 @@
 }
 
 .welcome {
-    padding: 2.5rem 2rem;
+    padding: 2rem 2rem;
     text-align: center;
     margin-bottom: 1.5rem;
+    position: relative;
 }
 
 .welcome h2 {
@@ -283,6 +284,37 @@
     margin: 0 auto;
 }
 
+.welcome-dismiss {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.25rem;
+    min-height: auto;
+    line-height: 1;
+    font-size: 18px;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.welcome-dismiss:hover { color: var(--text-secondary); background: var(--border-light); }
+
+.welcome-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 13px;
+}
+
+.welcome-link:hover { text-decoration: underline; }
+
 @media (max-width: 600px) {
     .secondary-grid { grid-template-columns: 1fr; gap: 1.5rem; }
     .journal-card textarea { min-height: 200px; }
@@ -294,8 +326,13 @@
 
 {% if is_new_user %}
 <div class="card welcome">
+    <form method="POST" action="/dismiss-welcome" style="margin: 0;">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button type="submit" class="welcome-dismiss" title="Dismiss">&times;</button>
+    </form>
     <h2>Welcome to Casey</h2>
-    <p>A calm space for writing, thinking, and staying on track. Start with today's journal entry.</p>
+    <p>A calm space for morning journaling, simple tasks, and blips &mdash; ideas that randomly resurface to keep your thinking fresh.</p>
+    <p style="margin-top: 1rem;"><a href="/about" class="welcome-link">Learn more about Casey &rsaquo;</a></p>
 </div>
 {% else %}
 <div class="greeting">
