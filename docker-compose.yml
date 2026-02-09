@@ -1,8 +1,9 @@
-version: '3.8'
-
 services:
   casey:
-    build: .
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-dev}
     container_name: casey
     ports:
       - "5095:5090"
@@ -10,6 +11,7 @@ services:
       - casey-data:/app/data
     environment:
       - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - VERSION=${VERSION:-dev}
       - FLASK_DEBUG=False
     restart: unless-stopped
     networks:

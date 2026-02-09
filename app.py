@@ -9,7 +9,7 @@ import secrets
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['API_KEY'] = os.environ.get('API_KEY', secrets.token_urlsafe(32))
-app.config['VERSION'] = '1.0.0'
+app.config['VERSION'] = os.environ.get('VERSION', 'dev')
 
 # Ensure data directory exists
 DATA_DIR = 'data'
@@ -88,8 +88,9 @@ def init_db():
     try:
         db.execute('SELECT updated_at FROM blips LIMIT 1')
     except:
-        db.execute('ALTER TABLE blips ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
-        db.execute('UPDATE blips SET updated_at = created_at WHERE updated_at IS NULL')
+        # SQLite doesn't support DEFAULT CURRENT_TIMESTAMP in ALTER TABLE
+        db.execute('ALTER TABLE blips ADD COLUMN updated_at TIMESTAMP')
+        db.execute('UPDATE blips SET updated_at = created_at')
         db.commit()
     
     db.commit()
