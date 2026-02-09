@@ -344,7 +344,8 @@
                                        {{ 'checked' if task.completed else '' }}
                                        onchange="this.form.submit()">
                                 <span style="flex: 1; font-size: 14px;">
-                                    {{ task.title }}
+                                    <a href="/tasks/{{ task.id }}/edit" style="color: inherit; text-decoration: none;" title="Edit task">{{ task.title }}</a>
+                                    {% if task.notes %}<span style="color: var(--text-muted); font-size: 11px; margin-left: 0.25rem;" title="{{ task.notes }}">&#128196;</span>{% endif %}
                                     {% if task.priority == 2 %}
                                         <span class="priority-badge high">High</span>
                                     {% elif task.priority == 1 %}

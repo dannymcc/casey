@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Task - Casey{% endblock %}
+
+{% block extra_styles %}
+.subtask-list {
+    list-style: none;
+    margin-top: 0.75rem;
+}
+
+.subtask-list li {
+    display: flex;
+    align-items: center;
+    padding: 0.375rem 0;
+    font-size: 13px;
+    gap: 0.5rem;
+}
+
+.subtask-list li.completed span {
+    text-decoration: line-through;
+    color: var(--text-muted);
+}
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 560px;">
+    <a href="/" class="back-link">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12L6 8l4-4"/></svg>
+        Back to Today
+    </a>
+
+    <div class="card">
+        <h2>Edit Task</h2>
+
+        <form method="POST" action="/tasks/{{ task.id }}/edit">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="form-group">
+                <label for="title">Title</label>
+                <input type="text" id="title" name="title" value="{{ task.title }}" required>
+            </div>
+            <div class="form-group">
+                <label for="notes">Notes</label>
+                <textarea id="notes" name="notes" rows="4" placeholder="Add notes or details..." style="min-height: 80px;">{{ task.notes or '' }}</textarea>
+            </div>
+            <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 1; min-width: 120px;">
+                    <label for="due_date">Due Date</label>
+                    <input type="date" id="due_date" name="due_date" value="{{ task.due_date or '' }}">
+                </div>
+                <div class="form-group" style="min-width: 100px;">
+                    <label for="priority">Priority</label>
+                    <select id="priority" name="priority">
+                        <option value="0" {{ 'selected' if task.priority == 0 }}>Normal</option>
+                        <option value="1" {{ 'selected' if task.priority == 1 }}>Medium</option>
+                        <option value="2" {{ 'selected' if task.priority == 2 }}>High</option>
+                    </select>
+                </div>
+                <div class="form-group" style="min-width: 100px;">
+                    <label for="recurrence">Repeat</label>
+                    <select id="recurrence" name="recurrence">
+                        <option value="none" {{ 'selected' if task.recurrence == 'none' }}>Once</option>
+                        <option value="daily" {{ 'selected' if task.recurrence == 'daily' }}>Daily</option>
+                        <option value="weekly" {{ 'selected' if task.recurrence == 'weekly' }}>Weekly</option>
+                        <option value="monthly" {{ 'selected' if task.recurrence == 'monthly' }}>Monthly</option>
+                    </select>
+                </div>
+            </div>
+            <div class="btn-group">
+                <button type="submit">Save Changes</button>
+                <a href="/" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+
+        {% if subtasks %}
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
+            <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Subtasks</div>
+            <ul class="subtask-list">
+                {% for sub in subtasks %}
+                <li class="{{ 'completed' if sub.completed }}">
+                    <form method="POST" action="/subtasks/{{ sub.id }}/toggle" style="margin: 0; display: flex; align-items: center;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <input type="checkbox" {{ 'checked' if sub.completed }} onchange="this.form.submit()" style="width: 16px; height: 16px; margin-right: 0.5rem;">
+                    </form>
+                    <span style="flex: 1;">{{ sub.title }}</span>
+                    <form method="POST" action="/subtasks/{{ sub.id }}/delete" style="margin: 0;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn-ghost btn-danger" style="padding: 0.125rem 0.25rem; font-size: 12px; min-height: auto;">&times;</button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <form method="POST" action="/tasks/{{ task.id }}/subtasks/add" style="margin-top: 0.75rem; display: flex; gap: 0.375rem;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="text" name="title" placeholder="Add subtask..." required style="font-size: 12px; padding: 0.375rem 0.5rem; flex: 1;">
+            <button type="submit" style="font-size: 12px; padding: 0.375rem 0.75rem; min-height: auto;">Add</button>
+        </form>
+
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 12px; color: var(--text-muted);">
+            Created {{ task.created_at | uk_date }}
+            {% if task.completed_at %}
+                &middot; Completed {{ task.completed_at | uk_date }}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

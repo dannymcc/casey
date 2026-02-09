@@ -195,6 +195,8 @@ def init_db():
         db.execute('ALTER TABLE tasks ADD COLUMN priority INTEGER DEFAULT 0')
     if 'recurrence' not in columns:
         db.execute("ALTER TABLE tasks ADD COLUMN recurrence TEXT DEFAULT 'none'")
+    if 'notes' not in columns:
+        db.execute('ALTER TABLE tasks ADD COLUMN notes TEXT')
 
     cursor = db.execute("PRAGMA table_info(journal_entries)")
     columns = [row[1] for row in cursor.fetchall()]
@@ -805,6 +807,38 @@ def add_task():
     return redirect(url_for('index'))
 
 
+@app.route('/tasks/<int:task_id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_task(task_id):
+    """Edit a task's details."""
+    db = get_db()
+    uf, uf_params = user_filter()
+    task = db.execute(f'SELECT * FROM tasks WHERE id = ? AND {uf}', (task_id, *uf_params)).fetchone()
+    if not task:
+        return redirect(url_for('index'))
+
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        notes = request.form.get('notes', '').strip() or None
+        due_date = request.form.get('due_date', '').strip() or None
+        priority = request.form.get('priority', 0, type=int)
+        recurrence = request.form.get('recurrence', 'none')
+        if recurrence not in ('none', 'daily', 'weekly', 'monthly'):
+            recurrence = 'none'
+        if title:
+            db.execute(
+                'UPDATE tasks SET title = ?, notes = ?, due_date = ?, priority = ?, recurrence = ? WHERE id = ?',
+                (title, notes, due_date, min(priority, 2), recurrence, task_id)
+            )
+            db.commit()
+        return redirect(url_for('index'))
+
+    subtasks = db.execute(
+        'SELECT * FROM subtasks WHERE task_id = ? ORDER BY sort_order', (task_id,)
+    ).fetchall()
+    return render_template('edit_task.html', task=task, subtasks=subtasks)
+
+
 @app.route('/tasks/<int:task_id>/toggle', methods=['POST'])
 @login_required
 def toggle_task(task_id):
@@ -1257,18 +1291,41 @@ def export_json():
     db = get_db()
     uf, uf_params = user_filter()
 
+    # Journal entries with tags
+    entries = db.execute(
+        f'SELECT id, date, content, mood, created_at, updated_at FROM journal_entries WHERE {uf} ORDER BY date DESC',
+        uf_params
+    ).fetchall()
+    journal_data = []
+    for entry in entries:
+        e = dict(entry)
+        tags = get_journal_tags(db, entry['id'])
+        e['tags'] = [t['name'] for t in tags]
+        del e['id']
+        journal_data.append(e)
+
+    # Tasks with subtasks
+    tasks = db.execute(
+        f'SELECT id, title, completed, due_date, priority, recurrence, notes, created_at, completed_at FROM tasks WHERE {uf} ORDER BY created_at DESC',
+        uf_params
+    ).fetchall()
+    tasks_data = []
+    for task in tasks:
+        t = dict(task)
+        subtasks = db.execute(
+            'SELECT title, completed FROM subtasks WHERE task_id = ? ORDER BY sort_order',
+            (task['id'],)
+        ).fetchall()
+        t['subtasks'] = [dict(s) for s in subtasks]
+        del t['id']
+        tasks_data.append(t)
+
     data = {
         'exported_at': datetime.now().isoformat(),
-        'journal_entries': [dict(r) for r in db.execute(
-            f'SELECT date, content, created_at, updated_at FROM journal_entries WHERE {uf} ORDER BY date DESC',
-            uf_params
-        ).fetchall()],
-        'tasks': [dict(r) for r in db.execute(
-            f'SELECT title, completed, due_date, created_at, completed_at FROM tasks WHERE {uf} ORDER BY created_at DESC',
-            uf_params
-        ).fetchall()],
+        'journal_entries': journal_data,
+        'tasks': tasks_data,
         'blips': [dict(r) for r in db.execute(
-            f'SELECT content, created_at, updated_at, surface_count FROM blips WHERE {uf} ORDER BY created_at DESC',
+            f'SELECT content, pinned, archived, created_at, updated_at, surface_count FROM blips WHERE {uf} ORDER BY created_at DESC',
             uf_params
         ).fetchall()],
     }
@@ -1292,30 +1349,32 @@ def export_csv():
 
     # Journal entries
     writer.writerow(['--- Journal Entries ---'])
-    writer.writerow(['date', 'content', 'created_at', 'updated_at'])
+    writer.writerow(['date', 'content', 'mood', 'tags', 'created_at', 'updated_at'])
     for r in db.execute(
-        f'SELECT date, content, created_at, updated_at FROM journal_entries WHERE {uf} ORDER BY date DESC',
+        f'SELECT id, date, content, mood, created_at, updated_at FROM journal_entries WHERE {uf} ORDER BY date DESC',
         uf_params
     ).fetchall():
-        writer.writerow([r['date'], r['content'], r['created_at'], r['updated_at']])
+        tags = get_journal_tags(db, r['id'])
+        tag_str = ', '.join(t['name'] for t in tags)
+        writer.writerow([r['date'], r['content'], r['mood'] or '', tag_str, r['created_at'], r['updated_at']])
 
     writer.writerow([])
     writer.writerow(['--- Tasks ---'])
-    writer.writerow(['title', 'completed', 'due_date', 'created_at', 'completed_at'])
+    writer.writerow(['title', 'completed', 'due_date', 'priority', 'recurrence', 'notes', 'created_at', 'completed_at'])
     for r in db.execute(
-        f'SELECT title, completed, due_date, created_at, completed_at FROM tasks WHERE {uf} ORDER BY created_at DESC',
+        f'SELECT title, completed, due_date, priority, recurrence, notes, created_at, completed_at FROM tasks WHERE {uf} ORDER BY created_at DESC',
         uf_params
     ).fetchall():
-        writer.writerow([r['title'], r['completed'], r['due_date'], r['created_at'], r['completed_at']])
+        writer.writerow([r['title'], r['completed'], r['due_date'], r['priority'], r['recurrence'], r['notes'] or '', r['created_at'], r['completed_at']])
 
     writer.writerow([])
     writer.writerow(['--- Blips ---'])
-    writer.writerow(['content', 'created_at', 'updated_at', 'surface_count'])
+    writer.writerow(['content', 'pinned', 'archived', 'created_at', 'updated_at', 'surface_count'])
     for r in db.execute(
-        f'SELECT content, created_at, updated_at, surface_count FROM blips WHERE {uf} ORDER BY created_at DESC',
+        f'SELECT content, pinned, archived, created_at, updated_at, surface_count FROM blips WHERE {uf} ORDER BY created_at DESC',
         uf_params
     ).fetchall():
-        writer.writerow([r['content'], r['created_at'], r['updated_at'], r['surface_count']])
+        writer.writerow([r['content'], r['pinned'], r['archived'], r['created_at'], r['updated_at'], r['surface_count']])
 
     return Response(
         output.getvalue(),
@@ -1559,12 +1618,49 @@ def calendar_view():
     else:
         next_year, next_month = year, month + 1
 
+    # Calculate journal streaks
+    all_dates = db.execute(
+        f'SELECT date FROM journal_entries WHERE {uf} ORDER BY date DESC',
+        uf_params
+    ).fetchall()
+    all_date_set = {r['date'] for r in all_dates}
+
+    current_streak = 0
+    d = date.today()
+    # If no entry today, start from yesterday
+    if d.isoformat() not in all_date_set:
+        d = d - timedelta(days=1)
+    while d.isoformat() in all_date_set:
+        current_streak += 1
+        d = d - timedelta(days=1)
+
+    longest_streak = 0
+    if all_dates:
+        sorted_dates = sorted(all_date_set)
+        streak = 1
+        for i in range(1, len(sorted_dates)):
+            prev_d = date.fromisoformat(sorted_dates[i - 1])
+            curr_d = date.fromisoformat(sorted_dates[i])
+            if (curr_d - prev_d).days == 1:
+                streak += 1
+            else:
+                longest_streak = max(longest_streak, streak)
+                streak = 1
+        longest_streak = max(longest_streak, streak)
+
+    total_entries = len(all_date_set)
+    entries_this_month = len(entry_dates)
+
     return render_template('calendar.html',
                            year=year, month=month, month_name=month_name,
                            weeks=weeks, entry_dates=entry_dates,
                            prev_year=prev_year, prev_month=prev_month,
                            next_year=next_year, next_month=next_month,
-                           today=date.today().isoformat())
+                           today=date.today().isoformat(),
+                           current_streak=current_streak,
+                           longest_streak=longest_streak,
+                           total_entries=total_entries,
+                           entries_this_month=entries_this_month)
 
 
 # --- Journal Templates ---
