@@ -134,6 +134,30 @@ def init_db():
             key TEXT PRIMARY KEY,
             value TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS tags (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            user_id INTEGER,
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            UNIQUE(name, user_id)
+        );
+
+        CREATE TABLE IF NOT EXISTS journal_tags (
+            journal_entry_id INTEGER NOT NULL,
+            tag_id INTEGER NOT NULL,
+            PRIMARY KEY (journal_entry_id, tag_id),
+            FOREIGN KEY (journal_entry_id) REFERENCES journal_entries (id),
+            FOREIGN KEY (tag_id) REFERENCES tags (id)
+        );
+
+        CREATE TABLE IF NOT EXISTS user_preferences (
+            user_id INTEGER NOT NULL,
+            key TEXT NOT NULL,
+            value TEXT NOT NULL,
+            PRIMARY KEY (user_id, key),
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        );
     ''')
 
     # Migrations for existing databases
@@ -159,6 +183,8 @@ def init_db():
         db.execute('ALTER TABLE tasks ADD COLUMN due_date TEXT')
     if 'priority' not in columns:
         db.execute('ALTER TABLE tasks ADD COLUMN priority INTEGER DEFAULT 0')
+    if 'recurrence' not in columns:
+        db.execute("ALTER TABLE tasks ADD COLUMN recurrence TEXT DEFAULT 'none'")
 
     cursor = db.execute("PRAGMA table_info(journal_entries)")
     columns = [row[1] for row in cursor.fetchall()]
@@ -167,6 +193,8 @@ def init_db():
         # Recreate unique constraint -- SQLite doesn't support dropping constraints,
         # but new rows will use the (date, user_id) pair. Old rows with NULL user_id
         # still work because UNIQUE treats each NULL as distinct.
+    if 'mood' not in columns:
+        db.execute('ALTER TABLE journal_entries ADD COLUMN mood INTEGER')
 
     cursor = db.execute("PRAGMA table_info(daily_blips)")
     columns = [row[1] for row in cursor.fetchall()]
@@ -266,6 +294,59 @@ def user_filter(table_alias=''):
     if user_id is not None:
         return f'{prefix}user_id = ?', (user_id,)
     return f'{prefix}user_id IS NULL', ()
+
+
+# --- User preferences ---
+
+def get_preference(user_id, key, default=None):
+    """Get a user preference value."""
+    if user_id is None:
+        return default
+    db = get_db()
+    row = db.execute('SELECT value FROM user_preferences WHERE user_id = ? AND key = ?',
+                     (user_id, key)).fetchone()
+    return row['value'] if row else default
+
+
+def set_preference(user_id, key, value):
+    """Set a user preference value."""
+    if user_id is None:
+        return
+    db = get_db()
+    db.execute('INSERT OR REPLACE INTO user_preferences (user_id, key, value) VALUES (?, ?, ?)',
+               (user_id, key, str(value)))
+    db.commit()
+
+
+def save_journal_tags(db, journal_entry_id, user_id, tags_str):
+    """Parse comma-separated tags and save them for a journal entry."""
+    # Clear existing tags for this entry
+    db.execute('DELETE FROM journal_tags WHERE journal_entry_id = ?', (journal_entry_id,))
+    if not tags_str or not tags_str.strip():
+        return
+    tag_names = [t.strip().lower() for t in tags_str.split(',') if t.strip()]
+    for name in tag_names:
+        # Get or create tag
+        existing = db.execute('SELECT id FROM tags WHERE name = ? AND user_id = ?',
+                              (name, user_id)).fetchone()
+        if existing:
+            tag_id = existing['id']
+        else:
+            cursor = db.execute('INSERT INTO tags (name, user_id) VALUES (?, ?)',
+                                (name, user_id))
+            tag_id = cursor.lastrowid
+        db.execute('INSERT OR IGNORE INTO journal_tags (journal_entry_id, tag_id) VALUES (?, ?)',
+                   (journal_entry_id, tag_id))
+
+
+def get_journal_tags(db, journal_entry_id):
+    """Get tags for a journal entry."""
+    return db.execute('''
+        SELECT t.name FROM tags t
+        JOIN journal_tags jt ON t.id = jt.tag_id
+        WHERE jt.journal_entry_id = ?
+        ORDER BY t.name
+    ''', (journal_entry_id,)).fetchall()
 
 
 # --- Template filters ---
@@ -439,6 +520,12 @@ def index():
         (today, *uf_params)
     ).fetchone()
 
+    # Get tags for today's entry
+    journal_tags = ''
+    if journal:
+        tags = get_journal_tags(db, journal['id'])
+        journal_tags = ', '.join(t['name'] for t in tags)
+
     # Get active tasks (due soonest first, then by creation)
     tasks = db.execute(
         f'''SELECT * FROM tasks WHERE completed = 0 AND {uf}
@@ -480,7 +567,8 @@ def index():
                     weight *= 2.0  # pinned blips surface more often
                 return weight
             weights = [blip_weight(b) for b in all_blips]
-            k = min(3, len(all_blips))
+            blip_count = int(get_preference(get_current_user_id(), 'daily_blip_count', '3'))
+            k = min(blip_count, len(all_blips))
             daily_blips = random.choices(all_blips, weights=weights, k=k)
             # Deduplicate in case choices picks same blip
             seen = set()
@@ -534,6 +622,7 @@ def index():
 
     return render_template('index.html',
                            journal=journal,
+                           journal_tags=journal_tags,
                            tasks=tasks,
                            blips=daily_blips,
                            today=today,
@@ -553,6 +642,8 @@ def save_journal():
     """Save journal entry."""
     today = date.today().isoformat()
     content = request.form.get('content', '')
+    mood = request.form.get('mood', type=int)
+    tags_str = request.form.get('tags', '')
     user_id = get_current_user_id()
 
     db = get_db()
@@ -566,14 +657,19 @@ def save_journal():
 
     if existing:
         db.execute(
-            'UPDATE journal_entries SET content = ?, updated_at = ? WHERE id = ?',
-            (content, datetime.now().isoformat(), existing['id'])
+            'UPDATE journal_entries SET content = ?, mood = ?, updated_at = ? WHERE id = ?',
+            (content, mood, datetime.now().isoformat(), existing['id'])
         )
+        entry_id = existing['id']
     else:
-        db.execute(
-            'INSERT INTO journal_entries (date, content, user_id, updated_at) VALUES (?, ?, ?, ?)',
-            (today, content, user_id, datetime.now().isoformat())
+        cursor = db.execute(
+            'INSERT INTO journal_entries (date, content, user_id, mood, updated_at) VALUES (?, ?, ?, ?, ?)',
+            (today, content, user_id, mood, datetime.now().isoformat())
         )
+        entry_id = cursor.lastrowid
+
+    # Save tags
+    save_journal_tags(db, entry_id, user_id, tags_str)
     db.commit()
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -591,6 +687,8 @@ def edit_journal(date_str):
 
     if request.method == 'POST':
         content = request.form.get('content', '')
+        mood = request.form.get('mood', type=int)
+        tags_str = request.form.get('tags', '')
         user_id = get_current_user_id()
 
         existing = db.execute(
@@ -600,14 +698,18 @@ def edit_journal(date_str):
 
         if existing:
             db.execute(
-                'UPDATE journal_entries SET content = ?, updated_at = ? WHERE id = ?',
-                (content, datetime.now().isoformat(), existing['id'])
+                'UPDATE journal_entries SET content = ?, mood = ?, updated_at = ? WHERE id = ?',
+                (content, mood, datetime.now().isoformat(), existing['id'])
             )
+            entry_id = existing['id']
         else:
-            db.execute(
-                'INSERT INTO journal_entries (date, content, user_id, updated_at) VALUES (?, ?, ?, ?)',
-                (date_str, content, user_id, datetime.now().isoformat())
+            cursor = db.execute(
+                'INSERT INTO journal_entries (date, content, user_id, mood, updated_at) VALUES (?, ?, ?, ?, ?)',
+                (date_str, content, user_id, mood, datetime.now().isoformat())
             )
+            entry_id = cursor.lastrowid
+
+        save_journal_tags(db, entry_id, user_id, tags_str)
         db.commit()
         return redirect(url_for('history'))
 
@@ -616,7 +718,12 @@ def edit_journal(date_str):
         (date_str, *uf_params)
     ).fetchone()
 
-    return render_template('edit_journal.html', entry=entry, entry_date=date_str)
+    entry_tags = ''
+    if entry:
+        tags = get_journal_tags(db, entry['id'])
+        entry_tags = ', '.join(t['name'] for t in tags)
+
+    return render_template('edit_journal.html', entry=entry, entry_date=date_str, entry_tags=entry_tags)
 
 
 @app.route('/tasks/add', methods=['POST'])
@@ -626,11 +733,14 @@ def add_task():
     title = request.form.get('title', '').strip()
     due_date = request.form.get('due_date', '').strip() or None
     priority = request.form.get('priority', 0, type=int)
+    recurrence = request.form.get('recurrence', 'none')
+    if recurrence not in ('none', 'daily', 'weekly', 'monthly'):
+        recurrence = 'none'
     if title:
         db = get_db()
         user_id = get_current_user_id()
-        db.execute('INSERT INTO tasks (title, user_id, due_date, priority) VALUES (?, ?, ?, ?)',
-                   (title, user_id, due_date, min(priority, 2)))
+        db.execute('INSERT INTO tasks (title, user_id, due_date, priority, recurrence) VALUES (?, ?, ?, ?, ?)',
+                   (title, user_id, due_date, min(priority, 2), recurrence))
         db.commit()
 
     return redirect(url_for('index'))
@@ -652,6 +762,30 @@ def toggle_task(task_id):
         completed_at = datetime.now().isoformat() if new_state else None
         db.execute('UPDATE tasks SET completed = ?, completed_at = ? WHERE id = ?',
                    (new_state, completed_at, task_id))
+
+        # Auto-create next instance for recurring tasks
+        if new_state and task['recurrence'] and task['recurrence'] != 'none':
+            next_due = None
+            base_date = date.fromisoformat(task['due_date']) if task['due_date'] else date.today()
+            if task['recurrence'] == 'daily':
+                next_due = (base_date + timedelta(days=1)).isoformat()
+            elif task['recurrence'] == 'weekly':
+                next_due = (base_date + timedelta(weeks=1)).isoformat()
+            elif task['recurrence'] == 'monthly':
+                month = base_date.month % 12 + 1
+                year = base_date.year + (1 if month == 1 else 0)
+                try:
+                    next_due = base_date.replace(year=year, month=month).isoformat()
+                except ValueError:
+                    # Handle months with fewer days (e.g., Jan 31 -> Feb 28)
+                    import calendar
+                    last_day = calendar.monthrange(year, month)[1]
+                    next_due = base_date.replace(year=year, month=month, day=min(base_date.day, last_day)).isoformat()
+            db.execute(
+                'INSERT INTO tasks (title, user_id, due_date, priority, recurrence) VALUES (?, ?, ?, ?, ?)',
+                (task['title'], task['user_id'], next_due, task['priority'], task['recurrence'])
+            )
+
         db.commit()
 
     return redirect(url_for('index'))
@@ -838,6 +972,7 @@ def history():
     page = request.args.get('page', 1, type=int)
     from_date = request.args.get('from', '')
     to_date = request.args.get('to', '')
+    tag_filter = request.args.get('tag', '')
     per_page = 30
     offset = (page - 1) * per_page
 
@@ -850,10 +985,21 @@ def history():
         date_filter += ' AND date <= ?'
         date_params.append(to_date)
 
-    entries = db.execute(
-        f'SELECT * FROM journal_entries WHERE {uf}{date_filter} ORDER BY date DESC LIMIT ? OFFSET ?',
-        (*date_params, per_page + 1, offset)
-    ).fetchall()
+    if tag_filter:
+        entries = db.execute(
+            f'''SELECT je.* FROM journal_entries je
+                JOIN journal_tags jt ON je.id = jt.journal_entry_id
+                JOIN tags t ON jt.tag_id = t.id
+                WHERE {uf.replace('user_id', 'je.user_id')}{date_filter.replace('date', 'je.date')}
+                AND t.name = ?
+                ORDER BY je.date DESC LIMIT ? OFFSET ?''',
+            (*date_params, tag_filter, per_page + 1, offset)
+        ).fetchall()
+    else:
+        entries = db.execute(
+            f'SELECT * FROM journal_entries WHERE {uf}{date_filter} ORDER BY date DESC LIMIT ? OFFSET ?',
+            (*date_params, per_page + 1, offset)
+        ).fetchall()
     has_more = len(entries) > per_page
     entries = entries[:per_page]
 
@@ -871,14 +1017,23 @@ def history():
                 WHERE db.journal_date = ? AND {uf.replace('user_id', 'db.user_id')}''',
             (day, *uf_params)
         ).fetchall()
+        entry_tags = get_journal_tags(db, entry['id'])
         enriched.append({
             'entry': entry,
             'tasks_done': tasks_done,
             'blips_surfaced': blips_surfaced,
+            'tags': entry_tags,
         })
 
+    # Get all tags for filter dropdown
+    all_tags = db.execute(
+        f'SELECT DISTINCT t.name FROM tags t WHERE {uf.replace("user_id", "t.user_id")} ORDER BY t.name',
+        uf_params
+    ).fetchall()
+
     return render_template('history.html', enriched=enriched, page=page, has_more=has_more,
-                           from_date=from_date, to_date=to_date)
+                           from_date=from_date, to_date=to_date, tag_filter=tag_filter,
+                           all_tags=all_tags)
 
 
 @app.route('/completed-tasks')
@@ -916,7 +1071,21 @@ def api_docs():
 @login_required
 def settings():
     """Settings page."""
-    return render_template('settings.html', version=app.config['VERSION'])
+    user_id = get_current_user_id()
+    blip_count = int(get_preference(user_id, 'daily_blip_count', '3'))
+    return render_template('settings.html', version=app.config['VERSION'], blip_count=blip_count)
+
+
+@app.route('/settings/preferences', methods=['POST'])
+@login_required
+def save_preferences():
+    """Save user preferences."""
+    user_id = get_current_user_id()
+    blip_count = request.form.get('daily_blip_count', 3, type=int)
+    blip_count = max(1, min(blip_count, 10))
+    set_preference(user_id, 'daily_blip_count', blip_count)
+    flash('Preferences saved.', 'success')
+    return redirect(url_for('settings'))
 
 
 @app.route('/settings/api')

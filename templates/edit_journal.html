@@ -2,6 +2,32 @@
 
 {% block title %}Edit Entry - Casey{% endblock %}
 
+{% block extra_styles %}
+.mood-selector {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.mood-option {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    transition: all 0.15s;
+}
+
+.mood-option:hover { border-color: var(--accent); }
+.mood-option input { display: none; }
+.mood-option.selected { border-color: var(--accent); background: var(--accent-subtle); }
+{% endblock %}
+
 {% block content %}
 <div style="max-width: 680px;">
     <a href="/history" class="back-link">
@@ -15,6 +41,22 @@
         <form method="POST" action="/journal/{{ entry_date }}/edit">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <textarea name="content" rows="16" placeholder="Write your journal entry...">{{ entry.content if entry else '' }}</textarea>
+            <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Mood</span>
+                    <div class="mood-selector">
+                        {% for val, label in [(1, '😔'), (2, '😐'), (3, '🙂'), (4, '😊'), (5, '🤩')] %}
+                        <label class="mood-option {{ 'selected' if entry and entry.mood == val }}" title="{{ ['Rough','Meh','Okay','Good','Great'][val-1] }}" onclick="this.parentElement.querySelectorAll('.mood-option').forEach(e=>e.classList.remove('selected'));this.classList.add('selected')">
+                            <input type="radio" name="mood" value="{{ val }}" {{ 'checked' if entry and entry.mood == val }}>
+                            {{ label }}
+                        </label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 150px;">
+                    <input type="text" name="tags" value="{{ entry_tags }}" placeholder="Tags (comma-separated)" style="font-size: 12px; padding: 0.375rem 0.625rem;">
+                </div>
+            </div>
             <div class="btn-group">
                 <button type="submit">Save Changes</button>
                 <a href="/history" class="btn btn-secondary">Cancel</a>
