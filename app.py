@@ -189,7 +189,7 @@ def init_db():
     existing_auth = db.execute("SELECT value FROM app_settings WHERE key = 'auth_enabled'").fetchone()
     if not existing_auth:
         db.execute("INSERT INTO app_settings (key, value) VALUES ('auth_enabled', 'true')")
-    elif existing_auth['value'] != 'true':
+    elif existing_auth[0] != 'true':
         db.execute("UPDATE app_settings SET value = 'true' WHERE key = 'auth_enabled'")
 
     db.commit()
