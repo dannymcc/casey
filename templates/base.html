@@ -517,6 +517,7 @@
                 <div class="nav-sep"></div>
                 <span class="nav-user">{{ current_user }}</span>
                 <form method="POST" action="/logout" style="margin: 0;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="btn-ghost" style="font-size: 12px; padding: 0.25rem 0.5rem;">Log out</button>
                 </form>
                 {% endif %}
@@ -531,6 +532,7 @@
                         <a href="/settings">Settings</a>
                         {% if auth_enabled and current_user %}
                         <form method="POST" action="/logout" style="margin: 0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <button type="submit" style="background: none; border: none; box-shadow: none; display: block; width: 100%; text-align: left; padding: 0.5rem 1rem; color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; font-family: var(--font); min-height: auto;">Log out</button>
                         </form>
                         {% endif %}

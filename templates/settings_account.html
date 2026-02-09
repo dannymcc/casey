@@ -18,6 +18,7 @@
         <div style="padding-top: 1rem; border-top: 1px solid var(--border-light);">
             <div style="font-weight: 500; font-size: 14px; margin-bottom: 1rem;">Change Password</div>
             <form method="POST" action="/settings/account/change-password">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="form-group">
                     <label for="current_password">Current password</label>
                     <input type="password" id="current_password" name="current_password" required>

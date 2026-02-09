@@ -3,6 +3,8 @@ FROM python:3.11-slim
 ARG VERSION=dev
 ENV VERSION=$VERSION
 
+RUN adduser --disabled-password --gecos '' appuser
+
 WORKDIR /app
 
 COPY requirements.txt .
@@ -10,9 +12,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# Initialize database on first run
-RUN python -c "from app import init_db; init_db()"
+RUN mkdir -p data && chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 5090
 
-CMD ["python", "app.py"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5090", "--workers", "4", "--timeout", "30", "--access-logfile", "-", "app:app"]

@@ -108,6 +108,7 @@
         <div style="margin-bottom: 1.5rem;">
             <div style="font-weight: 500; font-size: 14px; margin-bottom: 0.75rem;">Create a token</div>
             <form method="POST" action="/settings/api/tokens/create" style="display: flex; gap: 0.5rem;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <input type="text" name="name" placeholder="Token name (e.g. CLI, Shortcuts)" style="flex: 1;">
                 <button type="submit">Create</button>
             </form>
@@ -125,8 +126,9 @@
                         <span>{{ 'Last used ' + (token.last_used_at | uk_date) if token.last_used_at else 'Never used' }}</span>
                     </div>
                 </div>
-                <span class="token-preview">...{{ token.token[-4:] }}</span>
+                <span class="token-preview">{{ token.token[:8] }}...</span>
                 <form method="POST" action="/settings/api/tokens/{{ token.id }}/revoke" style="margin: 0;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     <button type="submit" class="btn-ghost btn-danger" style="font-size: 12px; min-height: auto;">Revoke</button>
                 </form>
             </div>

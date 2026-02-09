@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, g, session, flash
+from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date
 from functools import wraps
@@ -6,12 +7,30 @@ import sqlite3
 import random
 import os
 import secrets
+import hashlib
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+# Require a strong SECRET_KEY in production
+_secret = os.environ.get('SECRET_KEY', '')
+_weak_keys = {'', 'dev-secret-key-change-in-production', 'change-this-in-production'}
+if _secret in _weak_keys and not os.environ.get('FLASK_DEBUG', 'False') == 'True':
+    raise RuntimeError('SECRET_KEY must be set to a strong random value in production. '
+                       'Generate one with: python -c "import secrets; print(secrets.token_hex(32))"')
+app.config['SECRET_KEY'] = _secret or 'dev-secret-key-for-local-only'
 app.config['VERSION'] = os.environ.get('VERSION', 'dev')
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_DEBUG', 'False') != 'True'
+
+# CSRF protection
+csrf = CSRFProtect(app)
+
+# Rate limiting
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+limiter = Limiter(get_remote_address, app=app, default_limits=["200 per minute"],
+                  storage_uri="memory://")
 
 # Ensure data directory exists
 DATA_DIR = 'data'
@@ -160,17 +179,18 @@ def init_db():
                 pass
         if old_key:
             db.execute('INSERT INTO api_tokens (name, token) VALUES (?, ?)',
-                       ('Default', old_key))
+                       ('Default', hashlib.sha256(old_key.encode()).hexdigest()))
         else:
+            token = secrets.token_urlsafe(32)
             db.execute('INSERT INTO api_tokens (name, token) VALUES (?, ?)',
-                       ('Default', secrets.token_urlsafe(32)))
+                       ('Default', hashlib.sha256(token.encode()).hexdigest()))
 
-    # Seed auth_enabled setting if not present (migrate from env var)
+    # Auth is always enabled for SaaS — ensure setting is 'true'
     existing_auth = db.execute("SELECT value FROM app_settings WHERE key = 'auth_enabled'").fetchone()
     if not existing_auth:
-        env_auth = os.environ.get('AUTH_ENABLED', 'false').lower() == 'true'
-        db.execute("INSERT INTO app_settings (key, value) VALUES ('auth_enabled', ?)",
-                   ('true' if env_auth else 'false',))
+        db.execute("INSERT INTO app_settings (key, value) VALUES ('auth_enabled', 'true')")
+    elif existing_auth['value'] != 'true':
+        db.execute("UPDATE app_settings SET value = 'true' WHERE key = 'auth_enabled'")
 
     db.commit()
     db.close()
@@ -179,10 +199,8 @@ def init_db():
 # --- Auth helpers ---
 
 def is_auth_enabled():
-    """Check if authentication is enabled (reads from DB)."""
-    db = get_db()
-    row = db.execute("SELECT value FROM app_settings WHERE key = 'auth_enabled'").fetchone()
-    return row is not None and row['value'] == 'true'
+    """Authentication is always enabled for SaaS."""
+    return True
 
 
 def get_current_user_id():
@@ -250,9 +268,30 @@ def inject_auth():
     }
 
 
+@app.after_request
+def set_security_headers(response):
+    """Set security headers on all responses."""
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    response.headers['X-Frame-Options'] = 'DENY'
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    if request.is_secure:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data:; "
+        "connect-src 'self'"
+    )
+    return response
+
+
 # --- Auth routes ---
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute", methods=["POST"])
 def login():
     if not is_auth_enabled():
         return redirect(url_for('index'))
@@ -280,6 +319,7 @@ def login():
 
 
 @app.route('/register', methods=['GET', 'POST'])
+@limiter.limit("3 per hour", methods=["POST"])
 def register():
     if not is_auth_enabled():
         return redirect(url_for('index'))
@@ -622,12 +662,13 @@ def create_api_token():
     if not name:
         name = 'Untitled'
     token = secrets.token_urlsafe(32)
+    token_hashed = hash_token(token)
     user_id = get_current_user_id()
     db = get_db()
     db.execute('INSERT INTO api_tokens (user_id, name, token) VALUES (?, ?, ?)',
-               (user_id, name, token))
+               (user_id, name, token_hashed))
     db.commit()
-    session['new_token'] = token
+    session['new_token'] = token  # Show plaintext once
     flash('Token created successfully.', 'success')
     return redirect(url_for('settings_api'))
 
@@ -644,27 +685,7 @@ def revoke_api_token(token_id):
     return redirect(url_for('settings_api'))
 
 
-@app.route('/settings/auth', methods=['POST'])
-@login_required
-def settings_auth():
-    """Toggle authentication on or off."""
-    db = get_db()
-    currently_enabled = is_auth_enabled()
-
-    if currently_enabled:
-        # Disabling auth — must be logged in (enforced by @login_required)
-        db.execute("UPDATE app_settings SET value = 'false' WHERE key = 'auth_enabled'")
-        db.commit()
-        session.clear()
-        return redirect(url_for('settings'))
-    else:
-        # Enabling auth
-        db.execute("UPDATE app_settings SET value = 'true' WHERE key = 'auth_enabled'")
-        db.commit()
-        user_count = db.execute('SELECT COUNT(*) FROM users').fetchone()[0]
-        if user_count == 0:
-            return redirect(url_for('register'))
-        return redirect(url_for('login'))
+## Auth toggle removed — auth is always on for SaaS
 
 
 @app.route('/settings/account')
@@ -714,6 +735,11 @@ def change_password():
 
 # --- API Authentication ---
 
+def hash_token(token):
+    """Hash an API token using SHA-256 for storage."""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
 def require_api_key(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -721,69 +747,95 @@ def require_api_key(f):
         if not api_key:
             return jsonify({'error': 'Invalid or missing API key'}), 401
         db = get_db()
-        token_row = db.execute('SELECT * FROM api_tokens WHERE token = ?', (api_key,)).fetchone()
+        token_hash = hash_token(api_key)
+        # Check hashed tokens first, fall back to plaintext for migration
+        token_row = db.execute('SELECT * FROM api_tokens WHERE token = ?', (token_hash,)).fetchone()
+        if not token_row:
+            # Migration: check for plaintext token and hash it
+            token_row = db.execute('SELECT * FROM api_tokens WHERE token = ?', (api_key,)).fetchone()
+            if token_row:
+                db.execute('UPDATE api_tokens SET token = ? WHERE id = ?',
+                           (token_hash, token_row['id']))
         if not token_row:
             return jsonify({'error': 'Invalid or missing API key'}), 401
         db.execute('UPDATE api_tokens SET last_used_at = ? WHERE id = ?',
                    (datetime.now().isoformat(), token_row['id']))
         db.commit()
         g.api_token = token_row
+        g.api_user_id = token_row['user_id']
         return f(*args, **kwargs)
     return decorated_function
+
+
+def api_user_filter(table_alias=''):
+    """Return (sql_fragment, params) for filtering API queries by token owner."""
+    prefix = f'{table_alias}.' if table_alias else ''
+    user_id = g.get('api_user_id')
+    if user_id is not None:
+        return f'{prefix}user_id = ?', (user_id,)
+    return f'{prefix}user_id IS NULL', ()
 
 
 # --- API Endpoints ---
 
 @app.route('/api/journal', methods=['GET'])
+@csrf.exempt
 @require_api_key
 def api_get_journal():
     """Get journal entries."""
     limit = request.args.get('limit', 30, type=int)
     db = get_db()
-    # API uses global access (no user filter) -- secured by API key
-    entries = db.execute('SELECT * FROM journal_entries ORDER BY date DESC LIMIT ?', (limit,)).fetchall()
+    uf, uf_params = api_user_filter()
+    entries = db.execute(f'SELECT * FROM journal_entries WHERE {uf} ORDER BY date DESC LIMIT ?',
+                         (*uf_params, limit)).fetchall()
     return jsonify({'entries': [dict(entry) for entry in entries]})
 
 
 @app.route('/api/journal/<date_str>', methods=['GET', 'POST'])
+@csrf.exempt
 @require_api_key
 def api_journal_entry(date_str):
     """Get or create journal entry for a specific date."""
     db = get_db()
 
+    uf, uf_params = api_user_filter()
+
     if request.method == 'POST':
         content = request.json.get('content', '')
-        existing = db.execute('SELECT id FROM journal_entries WHERE date = ? AND user_id IS NULL',
-                              (date_str,)).fetchone()
+        existing = db.execute(f'SELECT id FROM journal_entries WHERE date = ? AND {uf}',
+                              (date_str, *uf_params)).fetchone()
         if existing:
             db.execute('UPDATE journal_entries SET content = ?, updated_at = ? WHERE id = ?',
                        (content, datetime.now().isoformat(), existing['id']))
         else:
-            db.execute('INSERT INTO journal_entries (date, content, updated_at) VALUES (?, ?, ?)',
-                       (date_str, content, datetime.now().isoformat()))
+            db.execute('INSERT INTO journal_entries (date, content, user_id, updated_at) VALUES (?, ?, ?, ?)',
+                       (date_str, content, g.api_user_id, datetime.now().isoformat()))
         db.commit()
-        entry = db.execute('SELECT * FROM journal_entries WHERE date = ? AND user_id IS NULL',
-                           (date_str,)).fetchone()
+        entry = db.execute(f'SELECT * FROM journal_entries WHERE date = ? AND {uf}',
+                           (date_str, *uf_params)).fetchone()
         return jsonify({'entry': dict(entry)})
 
-    entry = db.execute('SELECT * FROM journal_entries WHERE date = ? AND user_id IS NULL',
-                       (date_str,)).fetchone()
+    entry = db.execute(f'SELECT * FROM journal_entries WHERE date = ? AND {uf}',
+                       (date_str, *uf_params)).fetchone()
     if entry:
         return jsonify({'entry': dict(entry)})
     return jsonify({'error': 'Entry not found'}), 404
 
 
 @app.route('/api/tasks', methods=['GET', 'POST'])
+@csrf.exempt
 @require_api_key
 def api_tasks():
     """Get all tasks or create a new task."""
     db = get_db()
 
+    uf, uf_params = api_user_filter()
+
     if request.method == 'POST':
         title = request.json.get('title', '').strip()
         if not title:
             return jsonify({'error': 'Title is required'}), 400
-        cursor = db.execute('INSERT INTO tasks (title) VALUES (?)', (title,))
+        cursor = db.execute('INSERT INTO tasks (title, user_id) VALUES (?, ?)', (title, g.api_user_id))
         task_id = cursor.lastrowid
         db.commit()
         task = db.execute('SELECT * FROM tasks WHERE id = ?', (task_id,)).fetchone()
@@ -791,21 +843,25 @@ def api_tasks():
 
     completed = request.args.get('completed', type=int)
     if completed is not None:
-        tasks = db.execute('SELECT * FROM tasks WHERE completed = ? ORDER BY created_at DESC',
-                           (completed,)).fetchall()
+        tasks = db.execute(f'SELECT * FROM tasks WHERE completed = ? AND {uf} ORDER BY created_at DESC',
+                           (completed, *uf_params)).fetchall()
     else:
-        tasks = db.execute('SELECT * FROM tasks ORDER BY created_at DESC').fetchall()
+        tasks = db.execute(f'SELECT * FROM tasks WHERE {uf} ORDER BY created_at DESC',
+                           uf_params).fetchall()
     return jsonify({'tasks': [dict(task) for task in tasks]})
 
 
 @app.route('/api/tasks/<int:task_id>', methods=['GET', 'PUT', 'DELETE'])
+@csrf.exempt
 @require_api_key
 def api_task(task_id):
     """Get, update, or delete a specific task."""
     db = get_db()
 
+    uf, uf_params = api_user_filter()
+
     if request.method == 'DELETE':
-        db.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
+        db.execute(f'DELETE FROM tasks WHERE id = ? AND {uf}', (task_id, *uf_params))
         db.commit()
         return jsonify({'success': True})
 
@@ -813,56 +869,68 @@ def api_task(task_id):
         data = request.json
         if 'completed' in data:
             completed_at = datetime.now().isoformat() if data['completed'] else None
-            db.execute('UPDATE tasks SET completed = ?, completed_at = ? WHERE id = ?',
-                       (data['completed'], completed_at, task_id))
+            db.execute(f'UPDATE tasks SET completed = ?, completed_at = ? WHERE id = ? AND {uf}',
+                       (data['completed'], completed_at, task_id, *uf_params))
         if 'title' in data:
-            db.execute('UPDATE tasks SET title = ? WHERE id = ?', (data['title'], task_id))
+            db.execute(f'UPDATE tasks SET title = ? WHERE id = ? AND {uf}',
+                       (data['title'], task_id, *uf_params))
         db.commit()
 
-    task = db.execute('SELECT * FROM tasks WHERE id = ?', (task_id,)).fetchone()
+    task = db.execute(f'SELECT * FROM tasks WHERE id = ? AND {uf}',
+                      (task_id, *uf_params)).fetchone()
     if task:
         return jsonify({'task': dict(task)})
     return jsonify({'error': 'Task not found'}), 404
 
 
 @app.route('/api/blips', methods=['GET', 'POST'])
+@csrf.exempt
 @require_api_key
 def api_blips():
     """Get all blips or create a new blip."""
     db = get_db()
 
+    uf, uf_params = api_user_filter()
+
     if request.method == 'POST':
         content = request.json.get('content', '').strip()
         if not content:
             return jsonify({'error': 'Content is required'}), 400
-        cursor = db.execute('INSERT INTO blips (content) VALUES (?)', (content,))
+        cursor = db.execute('INSERT INTO blips (content, user_id) VALUES (?, ?)', (content, g.api_user_id))
         blip_id = cursor.lastrowid
         db.commit()
         blip = db.execute('SELECT * FROM blips WHERE id = ?', (blip_id,)).fetchone()
         return jsonify({'blip': dict(blip)}), 201
 
-    blips = db.execute('SELECT * FROM blips ORDER BY created_at DESC').fetchall()
+    blips = db.execute(f'SELECT * FROM blips WHERE {uf} ORDER BY created_at DESC',
+                       uf_params).fetchall()
     return jsonify({'blips': [dict(blip) for blip in blips]})
 
 
 @app.route('/api/blips/<int:blip_id>', methods=['GET', 'DELETE'])
+@csrf.exempt
 @require_api_key
 def api_blip(blip_id):
     """Get or delete a specific blip."""
     db = get_db()
 
+    uf, uf_params = api_user_filter()
+
     if request.method == 'DELETE':
-        db.execute('DELETE FROM daily_blips WHERE blip_id = ?', (blip_id,))
-        db.execute('DELETE FROM blips WHERE id = ?', (blip_id,))
+        db.execute(f'DELETE FROM daily_blips WHERE blip_id = ? AND {uf}', (blip_id, *uf_params))
+        db.execute(f'DELETE FROM blips WHERE id = ? AND {uf}', (blip_id, *uf_params))
         db.commit()
         return jsonify({'success': True})
 
-    blip = db.execute('SELECT * FROM blips WHERE id = ?', (blip_id,)).fetchone()
+    blip = db.execute(f'SELECT * FROM blips WHERE id = ? AND {uf}',
+                      (blip_id, *uf_params)).fetchone()
     if blip:
         return jsonify({'blip': dict(blip)})
     return jsonify({'error': 'Blip not found'}), 404
 
 
+# Initialize database on startup (works with both Gunicorn and direct run)
+init_db()
+
 if __name__ == '__main__':
-    init_db()
     app.run(host='0.0.0.0', port=5090, debug=os.environ.get('FLASK_DEBUG', 'False') == 'True')

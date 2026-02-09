@@ -10,10 +10,9 @@ services:
     volumes:
       - casey-data:/app/data
     environment:
-      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - SECRET_KEY=${SECRET_KEY}
       - VERSION=${VERSION:-dev}
       - FLASK_DEBUG=False
-      - AUTH_ENABLED=${AUTH_ENABLED:-false}
     restart: unless-stopped
     networks:
       - docker_default

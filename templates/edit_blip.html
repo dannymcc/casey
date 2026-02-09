@@ -13,6 +13,7 @@
         <h2>Edit Blip</h2>
 
         <form method="POST" action="/blips/{{ blip.id }}/edit">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <textarea name="content" rows="6" placeholder="Your thought, question, or topic..." required style="min-height: 120px;">{{ blip.content }}</textarea>
             <div class="btn-group">
                 <button type="submit">Save Changes</button>
