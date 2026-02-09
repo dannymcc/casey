@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Today - Casey{% endblock %}
+
+{% block content %}
+<div class="date-header">
+    📅 {{ today }}
+</div>
+
+<div class="grid-2">
+    <div>
+        <!-- Journal Entry -->
+        <div class="card">
+            <h2>Morning Journal</h2>
+            <form method="POST" action="/journal/save">
+                <textarea name="content" rows="12" placeholder="Clear your head...">{{ journal.content if journal else '' }}</textarea>
+                <div class="btn-group">
+                    <button type="submit">Save Entry</button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Today's Blips -->
+        <div class="card">
+            <h2>Today's Blips 💡</h2>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+                Random thoughts surfaced to spark ideas
+            </p>
+            
+            {% if blips %}
+                {% for blip in blips %}
+                    <div class="blip">
+                        {{ blip.content }}
+                        <div class="blip-meta">
+                            Surfaced {{ blip.surface_count }} times • Created {{ blip.created_at[:10] }}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    No blips yet. <a href="/blips">Add some</a> to get started!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div>
+        <!-- Tasks -->
+        <div class="card">
+            <h2>Tasks</h2>
+            
+            <form method="POST" action="/tasks/add" style="margin-bottom: 1rem;">
+                <input type="text" name="title" placeholder="Add a task..." required>
+                <button type="submit" style="margin-top: 0.5rem; width: 100%;">Add Task</button>
+            </form>
+            
+            {% if tasks %}
+                <ul class="task-list">
+                    {% for task in tasks %}
+                        <li class="task-item {{ 'completed' if task.completed else '' }}">
+                            <form method="POST" action="/tasks/{{ task.id }}/toggle" style="display: flex; align-items: center; flex: 1;">
+                                <input type="checkbox" 
+                                       {{ 'checked' if task.completed else '' }}
+                                       onchange="this.form.submit()">
+                                <span style="flex: 1;">{{ task.title }}</span>
+                            </form>
+                            <form method="POST" action="/tasks/{{ task.id }}/delete" style="margin-left: 0.5rem;">
+                                <button type="submit" class="btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">✕</button>
+                            </form>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="empty-state">
+                    No active tasks
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Completed Tasks - Casey{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Completed Tasks</h2>
+    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 2rem;">
+        Last 50 completed tasks
+    </p>
+    
+    {% if tasks %}
+        <ul class="task-list">
+            {% for task in tasks %}
+                <li class="task-item" style="opacity: 0.8;">
+                    <span style="flex: 1;">✓ {{ task.title }}</span>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">
+                        {{ task.completed_at[:10] if task.completed_at else 'Unknown' }}
+                    </span>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="empty-state">
+            No completed tasks yet
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

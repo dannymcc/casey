@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}History - Casey{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Journal History</h2>
+    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 2rem;">
+        Last 30 days of journal entries
+    </p>
+    
+    {% if entries %}
+        {% for entry in entries %}
+            <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+                <div style="font-weight: bold; color: var(--valdan-blue); margin-bottom: 0.5rem;">
+                    📅 {{ entry.date }}
+                </div>
+                <div style="white-space: pre-wrap; color: var(--text-primary);">
+                    {{ entry.content }}
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            No journal entries yet. Start writing today!
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

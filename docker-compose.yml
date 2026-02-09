@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  casey:
+    build: .
+    container_name: casey
+    ports:
+      - "5090:5090"
+    volumes:
+      - casey-data:/app
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
+      - FLASK_DEBUG=False
+    restart: unless-stopped
+    networks:
+      - docker_default
+
+volumes:
+  casey-data:
+
+networks:
+  docker_default:
+    external: true

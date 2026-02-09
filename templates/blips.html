@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Blips - Casey{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>All Blips</h2>
+    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+        Capture quick thoughts and ideas. They'll surface randomly in your daily journal.
+    </p>
+    
+    <form method="POST" action="/blips/add" style="margin-bottom: 2rem;">
+        <textarea name="content" rows="3" placeholder="Quick thought or idea..." required></textarea>
+        <button type="submit" style="margin-top: 0.5rem;">Add Blip</button>
+    </form>
+    
+    {% if blips %}
+        {% for blip in blips %}
+            <div class="blip" style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1;">
+                    {{ blip.content }}
+                    <div class="blip-meta">
+                        Created {{ blip.created_at[:10] }}
+                        {% if blip.last_surfaced %}
+                            • Last surfaced {{ blip.last_surfaced[:10] }} ({{ blip.surface_count }}x)
+                        {% else %}
+                            • Never surfaced
+                        {% endif %}
+                    </div>
+                </div>
+                <form method="POST" action="/blips/{{ blip.id }}/delete" style="margin-left: 1rem;">
+                    <button type="submit" class="btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">✕</button>
+                </form>
+            </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            No blips yet. Add your first quick thought above!
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
