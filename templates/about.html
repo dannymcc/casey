@@ -3,63 +3,61 @@
 {% block title %}About - Casey{% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 800px; margin: 0 auto;">
-    <h2>About Casey</h2>
-    
-    <div style="line-height: 1.8; color: var(--text-primary);">
-        <p style="margin-bottom: 1.5rem;">
-            Casey is a personal productivity app inspired by <strong>Casey Newton</strong>, editor of the Platformer newsletter and co-host of the <em>Hard Fork</em> podcast with Kevin Roose.
+<article style="max-width: 620px; font-family: var(--serif); line-height: 1.9; font-size: 15px;">
+    <h2 style="font-family: var(--serif); font-size: 1.375rem; font-weight: 500; margin-bottom: 1.5rem; letter-spacing: -0.02em;">About Casey</h2>
+
+    <p style="margin-bottom: 1.5rem;">
+        Casey is a personal productivity app inspired by <strong>Casey Newton</strong>, editor of the Platformer newsletter and co-host of the <em>Hard Fork</em> podcast with Kevin Roose.
+    </p>
+
+    <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-top: 2.5rem; margin-bottom: 0.875rem;">The Origin Story</h3>
+
+    <p style="margin-bottom: 1.5rem;">
+        During an episode of Hard Fork, Casey Newton shared his personal productivity system&mdash;a combination of morning journaling, task management, and a unique concept he calls <strong>&ldquo;blips&rdquo;</strong>: quick thoughts and ideas captured throughout the day that randomly resurface to spark creativity and reflection.
+    </p>
+
+    <p style="margin-bottom: 1.5rem;">
+        His approach struck a chord: simple, focused, and designed around clearing your head each morning rather than complex project management. It felt refreshingly human in a world of over-engineered productivity apps.
+    </p>
+
+    <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-top: 2.5rem; margin-bottom: 0.875rem;">The System</h3>
+
+    <p style="margin-bottom: 0.875rem;">Casey&rsquo;s productivity system has three core components:</p>
+
+    <ul style="margin-bottom: 1.5rem; margin-left: 1.25rem; color: var(--text-secondary);">
+        <li style="margin-bottom: 0.625rem;"><strong style="color: var(--text);">Morning Journal</strong> &mdash; Start each day by clearing your head. Write freely about what&rsquo;s on your mind.</li>
+        <li style="margin-bottom: 0.625rem;"><strong style="color: var(--text);">Task Management</strong> &mdash; Simple, actionable tasks. No over-planning. Just what needs doing today.</li>
+        <li style="margin-bottom: 0.625rem;"><strong style="color: var(--text);">Blips</strong> &mdash; Ongoing topics, questions, or ideas you&rsquo;re tracking. The system randomly surfaces a few each day&mdash;a form of spaced repetition that keeps important themes alive.</li>
+    </ul>
+
+    <p style="margin-bottom: 1.5rem;">
+        This app is a faithful digital implementation of that system. No feature creep. No notifications. No gamification. Just the essentials for thinking clearly and getting things done.
+    </p>
+
+    <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-top: 2.5rem; margin-bottom: 0.875rem;">The Philosophy</h3>
+
+    <p style="margin-bottom: 1.5rem;">
+        Casey isn&rsquo;t here to guarantee gains in your productivity. It&rsquo;s not here to ensure you journal every day, or document every experience.
+    </p>
+
+    <p style="margin-bottom: 1.5rem; font-style: italic; color: var(--accent); border-left: 2px solid var(--accent); padding-left: 1rem;">
+        Casey exists to get out of your way. For you to be present. Add what you need, ignore what you don&rsquo;t.
+    </p>
+
+    <p style="margin-bottom: 1.5rem;">
+        Use it daily or weekly. Fill every field or just one. There are no streaks to maintain, no points to earn, no guilt if you skip a day. This is a tool that adapts to you&mdash;not the other way around.
+    </p>
+
+    <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-top: 2.5rem; margin-bottom: 0.875rem;">The Name</h3>
+
+    <p style="margin-bottom: 1.5rem;">
+        Named after Casey Newton himself&mdash;both as a tribute to his system and because it felt right. If you enjoy Casey&rsquo;s work, subscribe to <a href="https://www.platformer.news/" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: none; font-weight: 500;">Platformer</a> and listen to <a href="https://www.nytimes.com/column/hard-fork" target="_blank" rel="noopener" style="color: var(--accent); text-decoration: none; font-weight: 500;">Hard Fork</a>.
+    </p>
+
+    <div style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border-light);">
+        <p style="font-size: 13px; color: var(--text-muted); font-family: var(--sans);">
+            Built with Flask and SQLite. Deployed with Docker. Designed to stay simple.
         </p>
-        
-        <h3 style="font-size: 1rem; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem;">The Origin Story</h3>
-        
-        <p style="margin-bottom: 1.5rem;">
-            During an episode of Hard Fork, Casey Newton shared his personal productivity system—a combination of morning journaling, task management, and a unique concept he calls <strong>"blips"</strong>: quick thoughts and ideas captured throughout the day that randomly resurface to spark creativity and reflection.
-        </p>
-        
-        <p style="margin-bottom: 1.5rem;">
-            His approach struck a chord: simple, focused, and designed around clearing your head each morning rather than complex project management. It felt refreshingly human in a world of over-engineered productivity apps.
-        </p>
-        
-        <h3 style="font-size: 1rem; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem;">The System</h3>
-        
-        <p style="margin-bottom: 1rem;">Casey's productivity system has three core components:</p>
-        
-        <ul style="margin-bottom: 1.5rem; margin-left: 1.5rem; color: var(--text-secondary);">
-            <li style="margin-bottom: 0.75rem;"><strong style="color: var(--text-primary);">Morning Journal</strong> — Start each day by clearing your head. Write freely about what's on your mind.</li>
-            <li style="margin-bottom: 0.75rem;"><strong style="color: var(--text-primary);">Task Management</strong> — Simple, actionable tasks. No over-planning. Just what needs doing today.</li>
-            <li style="margin-bottom: 0.75rem;"><strong style="color: var(--text-primary);">Blips</strong> — Ongoing topics, questions, or ideas you're tracking. Add to them as new information comes along. The system randomly surfaces a few each day—a form of spaced repetition that keeps important themes alive without you having to remember to check them.</li>
-        </ul>
-        
-        <p style="margin-bottom: 1.5rem;">
-            This app is a faithful digital implementation of that system. No feature creep. No notifications. No gamification. Just the essentials for thinking clearly and getting things done.
-        </p>
-        
-        <h3 style="font-size: 1rem; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem;">The Philosophy</h3>
-        
-        <p style="margin-bottom: 1.5rem;">
-            Casey isn't here to guarantee gains in your productivity. It's not here to ensure you journal every day, or document every experience.
-        </p>
-        
-        <p style="margin-bottom: 1.5rem;">
-            <strong>Casey exists to get out of your way.</strong> For you to be present. Add what you need, ignore what you don't.
-        </p>
-        
-        <p style="margin-bottom: 1.5rem;">
-            Use it daily or weekly. Fill every field or just one. There are no streaks to maintain, no points to earn, no guilt if you skip a day. This is a tool that adapts to you—not the other way around.
-        </p>
-        
-        <h3 style="font-size: 1rem; font-weight: 600; margin-top: 2rem; margin-bottom: 1rem;">The Name</h3>
-        
-        <p style="margin-bottom: 1.5rem;">
-            Named after Casey Newton himself—both as a tribute to his system and because it felt right. If you enjoy Casey's work, subscribe to <a href="https://www.platformer.news/" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: none; font-weight: 500;">Platformer</a> and listen to <a href="https://www.nytimes.com/column/hard-fork" target="_blank" rel="noopener" style="color: var(--primary); text-decoration: none; font-weight: 500;">Hard Fork</a>.
-        </p>
-        
-        <div style="margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border);">
-            <p style="font-size: 14px; color: var(--text-muted);">
-                Built with Flask and SQLite. Deployed with Docker. Designed to stay simple.
-            </p>
-        </div>
     </div>
-</div>
+</article>
 {% endblock %}

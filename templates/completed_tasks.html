@@ -3,27 +3,25 @@
 {% block title %}Completed Tasks - Casey{% endblock %}
 
 {% block content %}
-<div class="card">
+<div class="card" style="max-width: 720px;">
     <h2>Completed Tasks</h2>
-    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 2rem;">
-        Last 50 completed tasks
+    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 1.5rem;">
+        Last 50 completed
     </p>
 
     {% if tasks %}
         <ul class="task-list">
             {% for task in tasks %}
-                <li class="task-item" style="opacity: 0.75;">
+                <li class="task-item" style="opacity: 0.7;">
                     <span style="flex: 1; font-size: 14px; text-decoration: line-through; color: var(--text-secondary);">{{ task.title }}</span>
-                    <span style="font-size: 12px; color: var(--text-muted); white-space: nowrap; margin-left: 1rem;">
+                    <span style="font-size: 11px; color: var(--text-muted); white-space: nowrap; margin-left: 0.75rem;">
                         {{ task.completed_at | uk_date if task.completed_at else '' }}
                     </span>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
-        <div class="empty-state">
-            No completed tasks yet.
-        </div>
+        <div class="empty-state">No completed tasks yet.</div>
     {% endif %}
 </div>
 {% endblock %}

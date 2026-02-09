@@ -3,19 +3,19 @@
 {% block title %}History - Casey{% endblock %}
 
 {% block content %}
-<div class="card">
+<div class="card" style="max-width: 720px;">
     <h2>Journal History</h2>
-    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 2rem;">
-        Last 30 days of journal entries
+    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 1.5rem;">
+        Last 30 days of entries
     </p>
 
     {% if entries %}
         {% for entry in entries %}
-            <div style="border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 1.5rem;{% if loop.last %} border-bottom: none; margin-bottom: 0; padding-bottom: 0;{% endif %}">
-                <div style="font-weight: 600; font-size: 14px; color: var(--primary); margin-bottom: 0.5rem;">
+            <div style="padding-bottom: 1.25rem; margin-bottom: 1.25rem;{% if not loop.last %} border-bottom: 1px solid var(--border-light);{% endif %}">
+                <div style="font-family: var(--serif); font-style: italic; font-size: 13px; color: var(--accent); margin-bottom: 0.5rem;">
                     {{ entry.date | uk_date_long }}
                 </div>
-                <div style="white-space: pre-wrap; color: var(--text-primary); font-size: 14px; line-height: 1.7;">{{ entry.content }}</div>
+                <div style="white-space: pre-wrap; font-family: var(--serif); font-size: 14px; line-height: 1.8; color: var(--text);">{{ entry.content }}</div>
             </div>
         {% endfor %}
     {% else %}

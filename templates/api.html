@@ -2,167 +2,207 @@
 
 {% block title %}API - Casey{% endblock %}
 
+{% block extra_styles %}
+.api-section {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.api-section h4 {
+    font-family: var(--serif);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    margin-bottom: 0.875rem;
+    color: var(--text);
+}
+
+.endpoint {
+    margin-bottom: 1rem;
+}
+
+.endpoint:last-child { margin-bottom: 0; }
+
+.method {
+    display: inline-block;
+    padding: 0.125rem 0.375rem;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    font-family: var(--sans);
+    color: white;
+    letter-spacing: 0.02em;
+}
+
+.method-get { background: var(--success); }
+.method-post { background: var(--accent); }
+.method-put { background: #D4923A; }
+.method-delete { background: var(--danger); }
+
+.api-code {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    margin-left: 0.5rem;
+}
+
+.api-desc {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-top: 0.25rem;
+    margin-left: 3rem;
+}
+
+.api-param {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 0.125rem;
+    margin-left: 3rem;
+}
+
+pre.code-block {
+    background: var(--bg);
+    padding: 0.75rem;
+    border-radius: var(--radius);
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    line-height: 1.6;
+    border: 1px solid var(--border-light);
+}
+{% endblock %}
+
 {% block content %}
-<div class="card" style="max-width: 900px; margin: 0 auto;">
-    <h2>Casey API</h2>
-    
-    <div style="line-height: 1.8; color: var(--text-primary);">
-        <p style="margin-bottom: 1.5rem; font-size: 15px; color: var(--text-secondary);">
-            Whilst Casey is designed to be simple out of the box, <strong>we believe every app should have an API</strong>. 
-            Whether you want to build integrations, automate workflows, or access your data programmatically, 
-            the Casey API gives you full control.
+<div style="max-width: 720px;">
+    <div class="card">
+        <h2 style="font-size: 1.125rem;">Casey API</h2>
+
+        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 1.5rem; line-height: 1.7;">
+            Whilst Casey is designed to be simple out of the box, every app should have an API.
+            Access your data programmatically, build integrations, or automate workflows.
         </p>
-        
-        <div style="background: var(--accent-blue); border-left: 3px solid var(--primary); padding: 1rem 1.25rem; border-radius: 6px; margin: 2rem 0;">
-            <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">API Key Required</div>
-            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 0.75rem;">
-                All API requests require authentication via the <code style="background: var(--bg); padding: 0.125rem 0.375rem; border-radius: 3px;">X-API-Key</code> header.
+
+        <div style="border-left: 2px solid var(--accent); padding: 0.75rem 1rem; background: var(--accent-light); border-radius: 0 var(--radius) var(--radius) 0; margin-bottom: 2rem;">
+            <div style="font-weight: 500; font-size: 13px; margin-bottom: 0.25rem;">API Key Required</div>
+            <div style="font-size: 13px; color: var(--text-secondary);">
+                All requests require <code style="font-family: var(--mono); font-size: 11px;">X-API-Key</code> header.
+                <a href="/settings/api" style="color: var(--accent); text-decoration: none; font-weight: 500;">View your key &rsaquo;</a>
             </div>
-            <a href="/settings/api" style="color: var(--primary); text-decoration: none; font-size: 14px; font-weight: 500;">
-                View your API key in Settings →
-            </a>
         </div>
-        
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 1rem;">Base URL</h3>
-        <code style="background: var(--bg-secondary); padding: 0.5rem 0.75rem; border-radius: 4px; font-family: 'Monaco', 'Courier New', monospace; font-size: 13px; display: block; color: var(--text-primary);">https://casey.dmcc.io/api</code>
-        
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 1rem;">Authentication</h3>
-        <p style="margin-bottom: 1rem; color: var(--text-secondary);">
-            All API requests require authentication via the <code style="background: var(--bg-secondary); padding: 0.125rem 0.375rem; border-radius: 3px;">X-API-Key</code> header:
+
+        <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-bottom: 0.75rem;">Base URL</h3>
+        <pre class="code-block" style="margin-bottom: 2rem;">https://casey.dmcc.io/api</pre>
+
+        <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-bottom: 0.75rem;">Authentication</h3>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 0.5rem;">Include your API key in every request:</p>
+        <pre class="code-block" style="margin-bottom: 2rem;">curl -H "X-API-Key: YOUR_API_KEY" https://casey.dmcc.io/api/tasks</pre>
+
+        <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-bottom: 1rem;">Endpoints</h3>
+
+        <div class="api-section">
+            <h4>Journal Entries</h4>
+
+            <div class="endpoint">
+                <span class="method method-get">GET</span>
+                <code class="api-code">/api/journal</code>
+                <div class="api-desc">Get recent journal entries (default: 30)</div>
+                <div class="api-param">Query: <code style="font-family: var(--mono); font-size: 11px;">?limit=10</code></div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method method-get">GET</span>
+                <code class="api-code">/api/journal/2026-02-09</code>
+                <div class="api-desc">Get journal entry for a specific date</div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method method-post">POST</span>
+                <code class="api-code">/api/journal/2026-02-09</code>
+                <div class="api-desc">Create or update journal entry</div>
+                <pre class="code-block" style="margin-top: 0.375rem; margin-left: 3rem;">{"content": "Today was productive..."}</pre>
+            </div>
+        </div>
+
+        <div class="api-section">
+            <h4>Tasks</h4>
+
+            <div class="endpoint">
+                <span class="method method-get">GET</span>
+                <code class="api-code">/api/tasks</code>
+                <div class="api-desc">Get all tasks</div>
+                <div class="api-param">Query: <code style="font-family: var(--mono); font-size: 11px;">?completed=0</code> (0 or 1)</div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method method-post">POST</span>
+                <code class="api-code">/api/tasks</code>
+                <div class="api-desc">Create a new task</div>
+                <pre class="code-block" style="margin-top: 0.375rem; margin-left: 3rem;">{"title": "Finish the report"}</pre>
+            </div>
+
+            <div class="endpoint">
+                <span class="method method-get">GET</span>
+                <code class="api-code">/api/tasks/:id</code>
+                <div class="api-desc">Get a specific task</div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method method-put">PUT</span>
+                <code class="api-code">/api/tasks/:id</code>
+                <div class="api-desc">Update a task</div>
+                <pre class="code-block" style="margin-top: 0.375rem; margin-left: 3rem;">{"completed": 1}</pre>
+            </div>
+
+            <div class="endpoint">
+                <span class="method method-delete">DELETE</span>
+                <code class="api-code">/api/tasks/:id</code>
+                <div class="api-desc">Delete a task</div>
+            </div>
+        </div>
+
+        <div class="api-section">
+            <h4>Blips</h4>
+
+            <div class="endpoint">
+                <span class="method method-get">GET</span>
+                <code class="api-code">/api/blips</code>
+                <div class="api-desc">Get all blips</div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method method-post">POST</span>
+                <code class="api-code">/api/blips</code>
+                <div class="api-desc">Create a new blip</div>
+                <pre class="code-block" style="margin-top: 0.375rem; margin-left: 3rem;">{"content": "Quick idea: integrate with Notion"}</pre>
+            </div>
+
+            <div class="endpoint">
+                <span class="method method-get">GET</span>
+                <code class="api-code">/api/blips/:id</code>
+                <div class="api-desc">Get a specific blip</div>
+            </div>
+
+            <div class="endpoint">
+                <span class="method method-delete">DELETE</span>
+                <code class="api-code">/api/blips/:id</code>
+                <div class="api-desc">Delete a blip</div>
+            </div>
+        </div>
+
+        <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-top: 2rem; margin-bottom: 0.75rem;">Response Format</h3>
+        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 0.5rem;">
+            All responses are JSON. Errors return appropriate status codes:
         </p>
-        <pre style="background: var(--bg-secondary); padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 13px; color: var(--text-primary);"><code>curl -H "X-API-Key: YOUR_API_KEY" https://casey.dmcc.io/api/tasks</code></pre>
-        
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 1rem;">Endpoints</h3>
-        
-        <!-- Journal -->
-        <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--primary);">Journal Entries</h4>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: var(--success); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">GET</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/journal</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Get recent journal entries (default: 30)</p>
-                <p style="font-size: 13px; margin-left: 3.5rem; color: var(--text-muted); margin-top: 0.25rem;">Query params: <code style="background: var(--bg-secondary); padding: 0.125rem 0.375rem; border-radius: 3px;">?limit=10</code></p>
-            </div>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: var(--success); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">GET</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/journal/2026-02-09</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Get journal entry for a specific date</p>
-            </div>
-            
-            <div>
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: var(--primary); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">POST</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/journal/2026-02-09</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Create or update journal entry</p>
-                <pre style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 4px; margin-left: 3.5rem; margin-top: 0.5rem; font-size: 12px; overflow-x: auto;"><code>{"content": "Today was productive..."}</code></pre>
-            </div>
-        </div>
-        
-        <!-- Tasks -->
-        <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--primary);">Tasks</h4>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: var(--success); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">GET</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/tasks</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Get all tasks</p>
-                <p style="font-size: 13px; margin-left: 3.5rem; color: var(--text-muted); margin-top: 0.25rem;">Query params: <code style="background: var(--bg-secondary); padding: 0.125rem 0.375rem; border-radius: 3px;">?completed=0</code> (0 or 1)</p>
-            </div>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: var(--primary); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">POST</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/tasks</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Create a new task</p>
-                <pre style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 4px; margin-left: 3.5rem; margin-top: 0.5rem; font-size: 12px; overflow-x: auto;"><code>{"title": "Finish the report"}</code></pre>
-            </div>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: var(--success); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">GET</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/tasks/:id</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Get a specific task</p>
-            </div>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: #F59E0B; color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">PUT</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/tasks/:id</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Update a task</p>
-                <pre style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 4px; margin-left: 3.5rem; margin-top: 0.5rem; font-size: 12px; overflow-x: auto;"><code>{"completed": 1}</code></pre>
-            </div>
-            
-            <div>
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: var(--danger); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">DELETE</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/tasks/:id</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Delete a task</p>
-            </div>
-        </div>
-        
-        <!-- Blips -->
-        <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
-            <h4 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem; color: var(--primary);">Blips</h4>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: var(--success); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">GET</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/blips</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Get all blips</p>
-            </div>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: var(--primary); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">POST</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/blips</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Create a new blip</p>
-                <pre style="background: var(--bg-secondary); padding: 0.75rem; border-radius: 4px; margin-left: 3.5rem; margin-top: 0.5rem; font-size: 12px; overflow-x: auto;"><code>{"content": "Quick idea: integrate with Notion"}</code></pre>
-            </div>
-            
-            <div style="margin-bottom: 1.5rem;">
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: var(--success); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">GET</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/blips/:id</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Get a specific blip</p>
-            </div>
-            
-            <div>
-                <div style="display: flex; gap: 0.75rem; align-items: center; margin-bottom: 0.5rem;">
-                    <span style="background: var(--danger); color: white; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 11px; font-weight: 600;">DELETE</span>
-                    <code style="color: var(--text-primary); font-size: 14px;">/api/blips/:id</code>
-                </div>
-                <p style="color: var(--text-secondary); font-size: 14px; margin-left: 3.5rem;">Delete a blip</p>
-            </div>
-        </div>
-        
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 1rem;">Response Format</h3>
-        <p style="margin-bottom: 1rem; color: var(--text-secondary);">
-            All responses are JSON. Successful responses return data with HTTP 200/201. Errors return appropriate status codes with an error message:
-        </p>
-        <pre style="background: var(--bg-secondary); padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 13px; color: var(--text-primary);"><code>{"error": "Invalid or missing API key"}</code></pre>
-        
-        <h3 style="font-size: 1.125rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 1rem;">Example: Create a Task</h3>
-        <pre style="background: var(--bg-secondary); padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 13px; color: var(--text-primary);"><code>curl -X POST \
+        <pre class="code-block" style="margin-bottom: 2rem;">{"error": "Invalid or missing API key"}</pre>
+
+        <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-bottom: 0.75rem;">Example</h3>
+        <pre class="code-block">curl -X POST \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{"title":"Review API documentation"}' \
-  https://casey.dmcc.io/api/tasks</code></pre>
+  https://casey.dmcc.io/api/tasks</pre>
     </div>
 </div>
 {% endblock %}

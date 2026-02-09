@@ -3,31 +3,27 @@
 {% block title %}Today - Casey{% endblock %}
 
 {% block content %}
-<div class="date-header">
-    {{ today | uk_date_long }}
-</div>
+<div class="date-header">{{ today | uk_date_long }}</div>
 
 <div class="grid-2">
     <div>
-        <!-- Journal Entry -->
         <div class="card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
                 <h2 style="margin-bottom: 0;">Journal</h2>
                 <span id="save-indicator" class="save-indicator">Saved</span>
             </div>
             <form id="journal-form" method="POST" action="/journal/save">
                 <textarea id="journal-content" name="content" rows="12" placeholder="What's on your mind today?">{{ journal.content if journal else '' }}</textarea>
                 <div class="btn-group">
-                    <button type="submit">Save Entry</button>
+                    <button type="submit">Save</button>
                 </div>
             </form>
         </div>
 
-        <!-- Today's Blips -->
         <div class="card">
             <h2>Blips</h2>
-            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 1.25rem;">
-                Random thoughts surfaced to spark new ideas
+            <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 1rem; font-family: var(--sans);">
+                Random thoughts surfaced for reflection
             </p>
 
             {% if blips %}
@@ -48,14 +44,13 @@
     </div>
 
     <div>
-        <!-- Tasks -->
         <div class="card">
             <h2>Tasks</h2>
 
-            <form method="POST" action="/tasks/add" style="margin-bottom: 1.25rem;">
+            <form method="POST" action="/tasks/add" style="margin-bottom: 1rem;">
                 <div style="display: flex; gap: 0.5rem;">
                     <input type="text" name="title" placeholder="Add a task..." required style="flex: 1;">
-                    <button type="submit" style="white-space: nowrap;">Add</button>
+                    <button type="submit">Add</button>
                 </div>
             </form>
 
@@ -70,13 +65,13 @@
                                 <span style="flex: 1; font-size: 14px;">{{ task.title }}</span>
                             </form>
                             <form method="POST" action="/tasks/{{ task.id }}/delete" style="margin: 0;">
-                                <button type="submit" class="btn-ghost btn-danger task-delete" title="Delete task" style="padding: 0.25rem 0.5rem; font-size: 14px; line-height: 1;">&times;</button>
+                                <button type="submit" class="btn-ghost btn-danger task-delete" title="Delete" style="padding: 0.25rem 0.375rem; font-size: 13px; line-height: 1;">&times;</button>
                             </form>
                         </li>
                     {% endfor %}
                 </ul>
             {% else %}
-                <div class="empty-state" style="padding: 2rem 1rem;">
+                <div class="empty-state" style="padding: 1.5rem 1rem;">
                     No active tasks
                 </div>
             {% endif %}
@@ -93,32 +88,25 @@
     var timer = null;
     var lastSaved = textarea.value;
 
-    function showIndicator(text, className) {
+    function showIndicator(text, cls) {
         indicator.textContent = text;
-        indicator.className = 'save-indicator visible' + (className ? ' ' + className : '');
-        if (className === 'saved') {
-            setTimeout(function() {
-                indicator.className = 'save-indicator';
-            }, 2000);
+        indicator.className = 'save-indicator visible' + (cls ? ' ' + cls : '');
+        if (cls === 'saved') {
+            setTimeout(function() { indicator.className = 'save-indicator'; }, 2000);
         }
     }
 
     function autoSave() {
         if (textarea.value === lastSaved) return;
         showIndicator('Saving...', '');
-
         var form = new FormData();
         form.append('content', textarea.value);
-
         fetch('/journal/save', {
             method: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             body: form
         }).then(function(r) {
-            if (r.ok) {
-                lastSaved = textarea.value;
-                showIndicator('Saved', 'saved');
-            }
+            if (r.ok) { lastSaved = textarea.value; showIndicator('Saved', 'saved'); }
         }).catch(function() {});
     }
 
