@@ -162,5 +162,35 @@
             </table>
         </div>
     </div>
+
+    {% if audit_log %}
+    <div class="card" style="margin-top: 1.25rem;">
+        <h2>Audit Log</h2>
+        <div style="overflow-x: auto;">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Detail</th>
+                        <th>IP</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in audit_log %}
+                    <tr>
+                        <td style="white-space: nowrap;">{{ entry.created_at | uk_date }}</td>
+                        <td>{{ entry.username or '—' }}</td>
+                        <td><code style="font-size: 11px; padding: 0.125rem 0.375rem; background: var(--border-light); border-radius: 3px;">{{ entry.action }}</code></td>
+                        <td>{{ entry.detail or '—' }}</td>
+                        <td style="font-family: var(--mono); font-size: 11px;">{{ entry.ip_address or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

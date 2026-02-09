@@ -159,6 +159,16 @@ def init_db():
             FOREIGN KEY (user_id) REFERENCES users (id)
         );
 
+        CREATE TABLE IF NOT EXISTS audit_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            action TEXT NOT NULL,
+            detail TEXT,
+            ip_address TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users (id)
+        );
+
         CREATE TABLE IF NOT EXISTS subtasks (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             task_id INTEGER NOT NULL,
@@ -332,6 +342,21 @@ def user_filter(table_alias=''):
     return f'{prefix}user_id IS NULL', ()
 
 
+def audit_log(action, detail=None):
+    """Record an audit event for the current user."""
+    try:
+        db = get_db()
+        user_id = get_current_user_id()
+        ip = request.remote_addr if request else None
+        db.execute(
+            'INSERT INTO audit_log (user_id, action, detail, ip_address) VALUES (?, ?, ?, ?)',
+            (user_id, action, detail, ip)
+        )
+        db.commit()
+    except Exception:
+        pass  # Never let audit logging break the app
+
+
 # --- User preferences ---
 
 def get_preference(user_id, key, default=None):
@@ -489,6 +514,7 @@ def login():
             session.permanent = True
             session['user_id'] = user['id']
             session['username'] = user['username']
+            audit_log('login', f'User {username} logged in')
             return redirect(url_for('index'))
 
         flash('Invalid username or password.', 'error')
@@ -541,6 +567,7 @@ def register():
         session.permanent = True
         session['user_id'] = cursor.lastrowid
         session['username'] = username
+        audit_log('register', f'New account created: {username}')
         return redirect(url_for('index'))
 
     return render_template('register.html')
@@ -1288,6 +1315,7 @@ def search():
 @login_required
 def export_json():
     """Export all user data as JSON."""
+    audit_log('export', 'JSON export')
     db = get_db()
     uf, uf_params = user_filter()
 
@@ -1341,6 +1369,7 @@ def export_json():
 @login_required
 def export_csv():
     """Export all user data as CSV (zip of CSVs as a single combined CSV)."""
+    audit_log('export', 'CSV export')
     db = get_db()
     uf, uf_params = user_filter()
 
@@ -1437,6 +1466,7 @@ def change_password():
     db.execute('UPDATE users SET password_hash = ? WHERE id = ?',
                (generate_password_hash(new_password), session['user_id']))
     db.commit()
+    audit_log('password_change', 'Password changed')
     flash('Password updated successfully.', 'success')
     return redirect(url_for('settings_account'))
 
@@ -1462,6 +1492,8 @@ def delete_account():
     db.execute('DELETE FROM tags WHERE user_id = ?', (user_id,))
     db.execute('DELETE FROM user_preferences WHERE user_id = ?', (user_id,))
     db.execute('DELETE FROM api_tokens WHERE user_id = ?', (user_id,))
+    audit_log('account_delete', f'Account deleted: {session.get("username")}')
+    db.execute('DELETE FROM audit_log WHERE user_id = ?', (user_id,))
     db.execute('DELETE FROM users WHERE id = ?', (user_id,))
     db.commit()
     session.clear()
@@ -1493,29 +1525,51 @@ def import_json():
             (entry.get('date'), user_id)
         ).fetchone()
         if not existing and entry.get('date') and entry.get('content'):
-            db.execute(
-                'INSERT INTO journal_entries (date, content, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
-                (entry['date'], entry['content'], user_id,
+            cursor = db.execute(
+                'INSERT INTO journal_entries (date, content, mood, user_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+                (entry['date'], entry['content'], entry.get('mood'), user_id,
                  entry.get('created_at', datetime.now().isoformat()),
                  entry.get('updated_at', datetime.now().isoformat()))
             )
+            entry_id = cursor.lastrowid
+            # Import tags if present
+            for tag_name in entry.get('tags', []):
+                tag_name = str(tag_name).strip()
+                if not tag_name:
+                    continue
+                tag = db.execute('SELECT id FROM tags WHERE name = ? AND user_id = ?', (tag_name, user_id)).fetchone()
+                if not tag:
+                    tag_cursor = db.execute('INSERT INTO tags (name, user_id) VALUES (?, ?)', (tag_name, user_id))
+                    tag_id = tag_cursor.lastrowid
+                else:
+                    tag_id = tag['id']
+                db.execute('INSERT OR IGNORE INTO journal_tags (journal_entry_id, tag_id) VALUES (?, ?)', (entry_id, tag_id))
             imported['journal'] += 1
 
     for task in data.get('tasks', []):
         if task.get('title'):
-            db.execute(
-                'INSERT INTO tasks (title, completed, due_date, user_id, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?)',
-                (task['title'], task.get('completed', 0), task.get('due_date'), user_id,
-                 task.get('created_at', datetime.now().isoformat()), task.get('completed_at'))
+            cursor = db.execute(
+                'INSERT INTO tasks (title, completed, due_date, priority, recurrence, notes, user_id, created_at, completed_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                (task['title'], task.get('completed', 0), task.get('due_date'),
+                 task.get('priority', 0), task.get('recurrence', 'none'), task.get('notes'),
+                 user_id, task.get('created_at', datetime.now().isoformat()), task.get('completed_at'))
             )
+            task_id = cursor.lastrowid
+            # Import subtasks if present
+            for i, sub in enumerate(task.get('subtasks', [])):
+                if sub.get('title'):
+                    db.execute(
+                        'INSERT INTO subtasks (task_id, title, completed, sort_order) VALUES (?, ?, ?, ?)',
+                        (task_id, sub['title'], sub.get('completed', 0), i)
+                    )
             imported['tasks'] += 1
 
     for blip in data.get('blips', []):
         if blip.get('content'):
             db.execute(
-                'INSERT INTO blips (content, user_id, created_at, updated_at, surface_count) VALUES (?, ?, ?, ?, ?)',
-                (blip['content'], user_id,
-                 blip.get('created_at', datetime.now().isoformat()),
+                'INSERT INTO blips (content, pinned, archived, user_id, created_at, updated_at, surface_count) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                (blip['content'], blip.get('pinned', 0), blip.get('archived', 0),
+                 user_id, blip.get('created_at', datetime.now().isoformat()),
                  blip.get('updated_at', datetime.now().isoformat()),
                  blip.get('surface_count', 0))
             )
@@ -1523,6 +1577,7 @@ def import_json():
 
     db.commit()
     total = imported['journal'] + imported['tasks'] + imported['blips']
+    audit_log('import', f'JSON import: {total} items ({imported["journal"]} entries, {imported["tasks"]} tasks, {imported["blips"]} blips)')
     flash(f'Imported {total} items ({imported["journal"]} entries, {imported["tasks"]} tasks, {imported["blips"]} blips).', 'success')
     return redirect(url_for('settings'))
 
@@ -1722,7 +1777,15 @@ def admin_panel():
         FROM users u ORDER BY u.created_at DESC
     ''').fetchall()
 
-    return render_template('admin.html', stats=stats, users=users)
+    recent_audit = db.execute('''
+        SELECT a.action, a.detail, a.ip_address, a.created_at,
+               u.username
+        FROM audit_log a
+        LEFT JOIN users u ON a.user_id = u.id
+        ORDER BY a.created_at DESC LIMIT 50
+    ''').fetchall()
+
+    return render_template('admin.html', stats=stats, users=users, audit_log=recent_audit)
 
 
 @app.route('/admin/users/<int:user_id>/toggle-admin', methods=['POST'])
@@ -1733,11 +1796,12 @@ def toggle_admin(user_id):
         flash('Cannot change your own admin status.', 'error')
         return redirect(url_for('admin_panel'))
     db = get_db()
-    user = db.execute('SELECT is_admin FROM users WHERE id = ?', (user_id,)).fetchone()
+    user = db.execute('SELECT username, is_admin FROM users WHERE id = ?', (user_id,)).fetchone()
     if user:
-        db.execute('UPDATE users SET is_admin = ? WHERE id = ?',
-                   (0 if user['is_admin'] else 1, user_id))
+        new_status = 0 if user['is_admin'] else 1
+        db.execute('UPDATE users SET is_admin = ? WHERE id = ?', (new_status, user_id))
         db.commit()
+        audit_log('admin_toggle', f'{"Granted" if new_status else "Revoked"} admin for {user["username"]}')
         flash('Admin status updated.', 'success')
     return redirect(url_for('admin_panel'))
 
