@@ -355,7 +355,7 @@
         <div class="template-select">
             {% for tmpl in templates %}
             {% if tmpl.content %}
-            <button type="button" class="template-btn" onclick="applyTemplate('{{ tmpl.content | e }}')">{{ tmpl.name }}</button>
+            <button type="button" class="template-btn" data-content="{{ tmpl.content | e }}" onclick="applyTemplate(this.dataset.content)">{{ tmpl.name }}</button>
             {% endif %}
             {% endfor %}
         </div>
@@ -492,7 +492,7 @@
 
 function applyTemplate(content) {
     var textarea = document.getElementById('journal-content');
-    textarea.value = content.replace(/\\n/g, '\n');
+    textarea.value = content;
     textarea.focus();
     textarea.dispatchEvent(new Event('input'));
     var templateDiv = document.querySelector('.template-select');
