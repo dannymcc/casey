@@ -800,6 +800,7 @@ def index():
                            task_subtasks=task_subtasks,
                            blips=daily_blips,
                            today=today,
+                           now=datetime.now(),
                            is_new_user=is_new_user,
                            templates=JOURNAL_TEMPLATES,
                            stats={
