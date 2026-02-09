@@ -1171,8 +1171,11 @@ def completed_tasks():
     ).fetchall()
     has_more = len(tasks) > per_page
     tasks = tasks[:per_page]
+    total = db.execute(
+        f'SELECT COUNT(*) FROM tasks WHERE completed = 1 AND {uf}', uf_params
+    ).fetchone()[0]
 
-    return render_template('completed_tasks.html', tasks=tasks, page=page, has_more=has_more)
+    return render_template('completed_tasks.html', tasks=tasks, page=page, has_more=has_more, total=total)
 
 
 @app.route('/about')

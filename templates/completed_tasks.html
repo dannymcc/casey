@@ -2,73 +2,52 @@
 
 {% block title %}Completed Tasks - Casey{% endblock %}
 
-{% block extra_styles %}
-.completed-item {
-    display: flex;
-    align-items: center;
-    padding: 0.625rem 0;
-    border-bottom: 1px solid var(--border-light);
-}
-
-.completed-item:last-child { border-bottom: none; }
-
-.completed-check {
-    width: 18px;
-    height: 18px;
-    min-width: 18px;
-    border-radius: 50%;
-    background: var(--border);
-    margin-right: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.completed-check svg {
-    width: 10px;
-    height: 10px;
-    color: white;
-}
-
-.completed-title {
-    flex: 1;
-    font-size: 14px;
-    color: var(--text-muted);
-    text-decoration: line-through;
-}
-
-.completed-date {
-    font-size: 12px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    margin-left: 0.75rem;
-}
-{% endblock %}
-
 {% block content %}
-<div style="max-width: 680px;">
-    <h1 class="page-title">Completed</h1>
-    <p class="page-desc">Completed tasks</p>
+<div style="max-width: 600px;">
+    <a href="/" class="back-link">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12L6 8l4-4"/></svg>
+        Back to Today
+    </a>
 
-    {% if tasks %}
-        <div class="card">
-            {% for task in tasks %}
-                <div class="completed-item">
-                    <div class="completed-check">
-                        <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5l2.5 2.5L8 3"/></svg>
-                    </div>
-                    <span class="completed-title">{{ task.title }}{% if task.due_date %} <span style="text-decoration: none; font-size: 11px; color: var(--text-muted);">(due {{ task.due_date | uk_date }})</span>{% endif %}</span>
-                    <span class="completed-date">{{ task.completed_at | uk_date if task.completed_at else '' }}</span>
-                </div>
-            {% endfor %}
-            {% if has_more %}
-            <div style="text-align: center; padding-top: 0.75rem;">
-                <a href="?page={{ page + 1 }}" style="color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500;">Show more</a>
+    <h1 class="page-title">Completed Tasks</h1>
+    <p class="page-desc">{{ total }} task{{ 's' if total != 1 }} completed</p>
+
+    <div class="card">
+        {% if tasks %}
+            <ul class="task-list">
+                {% for task in tasks %}
+                    <li class="task-item completed">
+                        <form method="POST" action="/tasks/{{ task.id }}/toggle" style="display: flex; align-items: center; flex: 1; margin: 0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <input type="checkbox" checked onchange="this.form.submit()">
+                            <span style="flex: 1; font-size: 14px;">
+                                <a href="/tasks/{{ task.id }}/edit" style="color: inherit; text-decoration: none;">{{ task.title }}</a>
+                            </span>
+                        </form>
+                        <span style="font-size: 11px; color: var(--text-muted); white-space: nowrap;">
+                            {{ task.completed_at | uk_date if task.completed_at else '' }}
+                        </span>
+                    </li>
+                {% endfor %}
+            </ul>
+
+            {% if has_more or page > 1 %}
+            <div style="display: flex; justify-content: space-between; padding-top: 1rem; border-top: 1px solid var(--border-light); margin-top: 0.5rem;">
+                {% if page > 1 %}
+                    <a href="/completed-tasks?page={{ page - 1 }}" style="font-size: 13px; color: var(--accent); text-decoration: none;">&larr; Newer</a>
+                {% else %}
+                    <span></span>
+                {% endif %}
+                {% if has_more %}
+                    <a href="/completed-tasks?page={{ page + 1 }}" style="font-size: 13px; color: var(--accent); text-decoration: none;">Older &rarr;</a>
+                {% endif %}
             </div>
             {% endif %}
-        </div>
-    {% else %}
-        <div class="empty-state">No completed tasks yet.</div>
-    {% endif %}
+        {% else %}
+            <div class="empty-state" style="padding: 1.5rem 1rem;">
+                No completed tasks yet
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
