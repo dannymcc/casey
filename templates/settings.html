@@ -45,6 +45,36 @@ a.settings-row:hover {
     color: var(--text-muted);
     font-size: 16px;
 }
+
+.theme-select {
+    display: flex;
+    gap: 0.375rem;
+}
+
+.theme-option {
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-xs);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-secondary);
+    transition: all 0.15s;
+    font-family: var(--font);
+    min-height: auto;
+}
+
+.theme-option:hover {
+    border-color: var(--accent);
+    color: var(--text);
+}
+
+.theme-option.active {
+    background: var(--accent-subtle);
+    border-color: var(--accent);
+    color: var(--accent);
+}
 {% endblock %}
 
 {% block content %}
@@ -60,6 +90,18 @@ a.settings-row:hover {
             </div>
             <span class="settings-arrow">&rsaquo;</span>
         </a>
+
+        <div class="settings-row">
+            <div>
+                <div class="settings-label">Appearance</div>
+                <div class="settings-desc">Choose your preferred theme</div>
+            </div>
+            <div class="theme-select">
+                <button type="button" class="theme-option" data-theme="auto" onclick="setTheme('auto')">Auto</button>
+                <button type="button" class="theme-option" data-theme="light" onclick="setTheme('light')">Light</button>
+                <button type="button" class="theme-option" data-theme="dark" onclick="setTheme('dark')">Dark</button>
+            </div>
+        </div>
 
         <div class="settings-row">
             <div>
@@ -80,6 +122,17 @@ a.settings-row:hover {
             <span class="settings-arrow">&rsaquo;</span>
         </a>
 
+        <div class="settings-row">
+            <div>
+                <div class="settings-label">Export Data</div>
+                <div class="settings-desc">Download all your data</div>
+                <div style="margin-top: 0.375rem; display: flex; gap: 0.75rem;">
+                    <a href="/export/json" style="color: var(--accent); text-decoration: none; font-size: 12px; font-weight: 500;">Download JSON</a>
+                    <a href="/export/csv" style="color: var(--accent); text-decoration: none; font-size: 12px; font-weight: 500;">Download CSV</a>
+                </div>
+            </div>
+        </div>
+
         <a href="/about" class="settings-row">
             <div>
                 <div class="settings-label">About Casey</div>
@@ -89,4 +142,36 @@ a.settings-row:hover {
         </a>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setTheme(theme) {
+    localStorage.setItem('casey-theme', theme);
+    var html = document.documentElement;
+    html.removeAttribute('data-theme');
+    if (theme === 'dark') html.setAttribute('data-theme', 'dark');
+    else if (theme === 'light') html.setAttribute('data-theme', 'light');
+    updateButtons(theme);
+    // Update icon in header
+    if (window.toggleTheme) {
+        var isDark = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        var light = document.getElementById('theme-icon-light');
+        var dark = document.getElementById('theme-icon-dark');
+        if (light && dark) {
+            light.style.display = isDark ? 'none' : 'block';
+            dark.style.display = isDark ? 'block' : 'none';
+        }
+    }
+}
+
+function updateButtons(active) {
+    document.querySelectorAll('.theme-option').forEach(function(btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-theme') === active);
+    });
+}
+
+// Init active state
+updateButtons(localStorage.getItem('casey-theme') || 'auto');
+</script>
 {% endblock %}

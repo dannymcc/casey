@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Search - Casey{% endblock %}
+
+{% block extra_styles %}
+.search-form {
+    margin-bottom: 1.5rem;
+}
+
+.search-input-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.search-input-row input {
+    flex: 1;
+}
+
+.search-section {
+    margin-bottom: 1.5rem;
+}
+
+.search-section h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 0.75rem;
+}
+
+.search-result {
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.375rem;
+    background: var(--bg);
+    transition: background 0.15s;
+}
+
+.search-result:hover {
+    background: var(--border-light);
+}
+
+.search-result-title {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 0.125rem;
+}
+
+.search-result-title a {
+    color: var(--text);
+    text-decoration: none;
+}
+
+.search-result-title a:hover {
+    color: var(--accent);
+}
+
+.search-result-excerpt {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.search-result-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px;">
+    <h1 class="page-title">Search</h1>
+    <p class="page-desc">Find entries across your journal, tasks, and blips</p>
+
+    <form class="search-form" method="GET" action="/search">
+        <div class="search-input-row">
+            <input type="text" name="q" value="{{ q }}" placeholder="Search..." autofocus autocomplete="off">
+            <button type="submit">Search</button>
+        </div>
+    </form>
+
+    {% if q %}
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem;">
+            {{ total }} result{{ 's' if total != 1 }} for &ldquo;{{ q }}&rdquo;
+        </p>
+
+        {% if results.journal %}
+        <div class="search-section">
+            <h3>Journal ({{ results.journal | length }})</h3>
+            {% for entry in results.journal %}
+            <div class="search-result">
+                <div class="search-result-title"><a href="/journal/{{ entry.date }}/edit">{{ entry.date | uk_date_long }}</a></div>
+                <div class="search-result-excerpt">{{ entry.content[:200] }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if results.tasks %}
+        <div class="search-section">
+            <h3>Tasks ({{ results.tasks | length }})</h3>
+            {% for task in results.tasks %}
+            <div class="search-result">
+                <div class="search-result-title">
+                    {% if task.completed %}
+                        <span style="text-decoration: line-through; color: var(--text-muted);">{{ task.title }}</span>
+                    {% else %}
+                        {{ task.title }}
+                    {% endif %}
+                </div>
+                <div class="search-result-meta">
+                    {{ 'Completed' if task.completed else 'Active' }} &middot; Created {{ task.created_at | uk_date }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if results.blips %}
+        <div class="search-section">
+            <h3>Blips ({{ results.blips | length }})</h3>
+            {% for blip in results.blips %}
+            <div class="search-result">
+                <div class="search-result-title"><a href="/blips/{{ blip.id }}/edit">{{ blip.content[:100] }}</a></div>
+                <div class="search-result-meta">
+                    Created {{ blip.created_at | uk_date }}
+                    {% if blip.surface_count %} &middot; Surfaced {{ blip.surface_count }}&times;{% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if total == 0 %}
+        <div class="empty-state">
+            No results found. Try different keywords.
+        </div>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

@@ -15,32 +15,91 @@
     padding-bottom: 0;
 }
 
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
 .history-date {
     font-size: 13px;
     font-weight: 500;
     color: var(--accent);
-    margin-bottom: 0.5rem;
+}
+
+.history-edit {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-xs);
+    transition: all 0.15s;
+}
+
+.history-edit:hover {
+    color: var(--accent);
+    background: var(--accent-subtle);
 }
 
 .history-content {
-    white-space: pre-wrap;
     font-size: 14px;
     line-height: 1.75;
     color: var(--text);
+}
+
+.history-sidebar {
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.history-sidebar-item {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.history-sidebar-item svg {
+    width: 12px;
+    height: 12px;
 }
 {% endblock %}
 
 {% block content %}
 <div style="max-width: 680px;">
     <h1 class="page-title">History</h1>
-    <p class="page-desc">Journal entries</p>
+    <p class="page-desc">Journal entries and daily activity</p>
 
-    {% if entries %}
+    {% if enriched %}
         <div class="card">
-            {% for entry in entries %}
+            {% for item in enriched %}
                 <div class="history-entry">
-                    <div class="history-date">{{ entry.date | uk_date_long }}</div>
-                    <div class="history-content">{{ entry.content }}</div>
+                    <div class="history-header">
+                        <div class="history-date">{{ item.entry.date | uk_date_long }}</div>
+                        <a href="/journal/{{ item.entry.date }}/edit" class="history-edit">Edit</a>
+                    </div>
+                    <div class="history-content md-content">{{ item.entry.content | markdown }}</div>
+                    {% if item.tasks_done or item.blips_surfaced %}
+                    <div class="history-sidebar">
+                        {% if item.tasks_done %}
+                        <span class="history-sidebar-item">
+                            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2.5 6l2.5 2.5L9.5 3.5"/></svg>
+                            {{ item.tasks_done | length }} task{{ 's' if item.tasks_done | length != 1 }} completed
+                        </span>
+                        {% endif %}
+                        {% if item.blips_surfaced %}
+                        <span class="history-sidebar-item">
+                            <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="6" cy="6" r="2"/><path d="M6 1v2M6 9v2M1 6h2M9 6h2"/></svg>
+                            {{ item.blips_surfaced | length }} blip{{ 's' if item.blips_surfaced | length != 1 }} surfaced
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
                 </div>
             {% endfor %}
             {% if has_more %}

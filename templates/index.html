@@ -18,14 +18,31 @@
     margin-bottom: 1rem;
 }
 
+.journal-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.word-count {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
 .task-input-row {
     display: flex;
     gap: 0.5rem;
     margin-bottom: 1rem;
 }
 
-.task-input-row input {
+.task-input-row input[type="text"] {
     flex: 1;
+}
+
+.task-input-row input[type="date"] {
+    width: auto;
+    flex-shrink: 0;
+    max-width: 140px;
 }
 
 .task-input-row button {
@@ -47,17 +64,87 @@
     height: 14px;
     color: var(--accent);
 }
+
+.welcome {
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.welcome h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.025em;
+}
+
+.welcome p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.7;
+    max-width: 480px;
+    margin: 0 auto;
+}
+
+.welcome-features {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.welcome-feature {
+    text-align: center;
+    max-width: 160px;
+}
+
+.welcome-feature strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.welcome-feature span {
+    font-size: 12px;
+    color: var(--text-muted);
+}
 {% endblock %}
 
 {% block content %}
 <div class="date-label">{{ today | uk_date_long }}</div>
+
+{% if is_new_user %}
+<div class="card welcome">
+    <h2>Welcome to Casey</h2>
+    <p>Your personal space for journaling, tracking tasks, and surfacing ideas. Start by writing in your journal, adding a task, or creating your first blip.</p>
+    <div class="welcome-features">
+        <div class="welcome-feature">
+            <strong>Journal</strong>
+            <span>Write freely each morning</span>
+        </div>
+        <div class="welcome-feature">
+            <strong>Tasks</strong>
+            <span>Track what needs doing</span>
+        </div>
+        <div class="welcome-feature">
+            <strong>Blips</strong>
+            <span>Ideas that resurface randomly</span>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <div class="grid-2">
     <div>
         <div class="card">
             <div class="journal-header">
                 <h2 style="margin-bottom: 0;">Journal</h2>
-                <span id="save-indicator" class="save-indicator">Saved</span>
+                <div class="journal-meta">
+                    <span id="word-count" class="word-count">{{ (journal.content if journal else '') | word_count }} words</span>
+                    <span id="save-indicator" class="save-indicator">Saved</span>
+                </div>
             </div>
             <form id="journal-form" method="POST" action="/journal/save">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -102,6 +189,7 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <div class="task-input-row">
                     <input type="text" name="title" placeholder="Add a task..." required>
+                    <input type="date" name="due_date" title="Due date (optional)">
                     <button type="submit">Add</button>
                 </div>
             </form>
@@ -115,7 +203,12 @@
                                 <input type="checkbox"
                                        {{ 'checked' if task.completed else '' }}
                                        onchange="this.form.submit()">
-                                <span style="flex: 1; font-size: 14px;">{{ task.title }}</span>
+                                <span style="flex: 1; font-size: 14px;">
+                                    {{ task.title }}
+                                    {% if task.due_date %}
+                                        <span class="due-badge {{ 'overdue' if task.due_date < today }}">{{ task.due_date | uk_date }}</span>
+                                    {% endif %}
+                                </span>
                             </form>
                             <form method="POST" action="/tasks/{{ task.id }}/delete" style="margin: 0;">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -139,8 +232,15 @@
 (function() {
     var textarea = document.getElementById('journal-content');
     var indicator = document.getElementById('save-indicator');
+    var wordCount = document.getElementById('word-count');
     var timer = null;
     var lastSaved = textarea.value;
+
+    function updateWordCount() {
+        var text = textarea.value.trim();
+        var count = text ? text.split(/\s+/).length : 0;
+        wordCount.textContent = count + ' word' + (count !== 1 ? 's' : '');
+    }
 
     function showIndicator(text, cls) {
         indicator.textContent = text;
@@ -166,6 +266,7 @@
     }
 
     textarea.addEventListener('input', function() {
+        updateWordCount();
         clearTimeout(timer);
         timer = setTimeout(autoSave, 1500);
     });

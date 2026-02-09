@@ -1,13 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, g, session, flash
+from flask import Flask, render_template, request, redirect, url_for, jsonify, g, session, flash, Response
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, date
 from functools import wraps
+from markupsafe import Markup
 import sqlite3
 import random
+import math
+import json
+import csv
+import io
 import os
 import secrets
 import hashlib
+import markdown
 
 app = Flask(__name__)
 
@@ -144,6 +150,8 @@ def init_db():
     columns = [row[1] for row in cursor.fetchall()]
     if 'user_id' not in columns:
         db.execute('ALTER TABLE tasks ADD COLUMN user_id INTEGER')
+    if 'due_date' not in columns:
+        db.execute('ALTER TABLE tasks ADD COLUMN due_date TEXT')
 
     cursor = db.execute("PRAGMA table_info(journal_entries)")
     columns = [row[1] for row in cursor.fetchall()]
@@ -161,6 +169,26 @@ def init_db():
     # Check if old unique constraint needs updating -- for new installs this is
     # handled by CREATE TABLE. For existing DBs, the old UNIQUE(journal_date, blip_id)
     # still works since user_id will be NULL for legacy data.
+
+    # Full-text search virtual tables
+    db.executescript('''
+        CREATE VIRTUAL TABLE IF NOT EXISTS journal_fts USING fts5(
+            content, date, content='journal_entries', content_rowid='id'
+        );
+        CREATE VIRTUAL TABLE IF NOT EXISTS blips_fts USING fts5(
+            content, content='blips', content_rowid='id'
+        );
+        CREATE VIRTUAL TABLE IF NOT EXISTS tasks_fts USING fts5(
+            title, content='tasks', content_rowid='id'
+        );
+    ''')
+
+    # Rebuild FTS indexes if empty
+    fts_count = db.execute('SELECT COUNT(*) FROM journal_fts').fetchone()[0]
+    if fts_count == 0:
+        db.execute("INSERT INTO journal_fts(journal_fts) VALUES('rebuild')")
+        db.execute("INSERT INTO blips_fts(blips_fts) VALUES('rebuild')")
+        db.execute("INSERT INTO tasks_fts(tasks_fts) VALUES('rebuild')")
 
     # Migrate old single API key into api_tokens table
     token_count = db.execute('SELECT COUNT(*) FROM api_tokens').fetchone()[0]
@@ -257,6 +285,23 @@ def uk_date_long_filter(date_string):
         return dt.strftime('%A, %-d %B %Y')
     except (ValueError, AttributeError):
         return date_string
+
+
+@app.template_filter('markdown')
+def markdown_filter(text):
+    """Render markdown to HTML."""
+    if not text:
+        return ''
+    html = markdown.markdown(text, extensions=['nl2br', 'smarty', 'fenced_code'])
+    return Markup(html)
+
+
+@app.template_filter('word_count')
+def word_count_filter(text):
+    """Count words in text."""
+    if not text:
+        return 0
+    return len(text.split())
 
 
 @app.context_processor
@@ -385,9 +430,11 @@ def index():
         (today, *uf_params)
     ).fetchone()
 
-    # Get active tasks
+    # Get active tasks (due soonest first, then by creation)
     tasks = db.execute(
-        f'SELECT * FROM tasks WHERE completed = 0 AND {uf} ORDER BY created_at DESC',
+        f'''SELECT * FROM tasks WHERE completed = 0 AND {uf}
+            ORDER BY CASE WHEN due_date IS NOT NULL THEN 0 ELSE 1 END,
+                     due_date ASC, created_at DESC''',
         uf_params
     ).fetchall()
 
@@ -402,11 +449,35 @@ def index():
 
     if not daily_blips:
         blip_uf, blip_uf_params = user_filter()
-        daily_blips = db.execute(f'''
+        # Weighted random: prefer less-surfaced and older-surfaced blips
+        all_blips = db.execute(f'''
             SELECT * FROM blips WHERE {blip_uf}
-            ORDER BY RANDOM()
-            LIMIT 3
         ''', blip_uf_params).fetchall()
+        if all_blips:
+            def blip_weight(b):
+                count = b['surface_count'] or 0
+                weight = 1.0 / (1 + count)
+                if b['last_surfaced']:
+                    try:
+                        last = datetime.fromisoformat(b['last_surfaced'])
+                        days_ago = (datetime.now() - last).days
+                        weight *= (1 + days_ago * 0.5)
+                    except (ValueError, TypeError):
+                        weight *= 2.0
+                else:
+                    weight *= 3.0  # never surfaced gets high weight
+                return weight
+            weights = [blip_weight(b) for b in all_blips]
+            k = min(3, len(all_blips))
+            daily_blips = random.choices(all_blips, weights=weights, k=k)
+            # Deduplicate in case choices picks same blip
+            seen = set()
+            unique = []
+            for b in daily_blips:
+                if b['id'] not in seen:
+                    seen.add(b['id'])
+                    unique.append(b)
+            daily_blips = unique
 
         user_id = get_current_user_id()
         for blip in daily_blips:
@@ -420,11 +491,24 @@ def index():
             )
         db.commit()
 
+    # Check if this is a brand-new user (for onboarding)
+    total_entries = db.execute(
+        f'SELECT COUNT(*) FROM journal_entries WHERE {uf}', uf_params
+    ).fetchone()[0]
+    total_blips = db.execute(
+        f'SELECT COUNT(*) FROM blips WHERE {uf}', uf_params
+    ).fetchone()[0]
+    total_tasks = db.execute(
+        f'SELECT COUNT(*) FROM tasks WHERE {uf}', uf_params
+    ).fetchone()[0]
+    is_new_user = (total_entries + total_blips + total_tasks) == 0
+
     return render_template('index.html',
                            journal=journal,
                            tasks=tasks,
                            blips=daily_blips,
-                           today=today)
+                           today=today,
+                           is_new_user=is_new_user)
 
 
 @app.route('/journal/save', methods=['POST'])
@@ -462,15 +546,54 @@ def save_journal():
     return redirect(url_for('index'))
 
 
+@app.route('/journal/<date_str>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_journal(date_str):
+    """Edit a past journal entry."""
+    db = get_db()
+    uf, uf_params = user_filter()
+
+    if request.method == 'POST':
+        content = request.form.get('content', '')
+        user_id = get_current_user_id()
+
+        existing = db.execute(
+            f'SELECT id FROM journal_entries WHERE date = ? AND {uf}',
+            (date_str, *uf_params)
+        ).fetchone()
+
+        if existing:
+            db.execute(
+                'UPDATE journal_entries SET content = ?, updated_at = ? WHERE id = ?',
+                (content, datetime.now().isoformat(), existing['id'])
+            )
+        else:
+            db.execute(
+                'INSERT INTO journal_entries (date, content, user_id, updated_at) VALUES (?, ?, ?, ?)',
+                (date_str, content, user_id, datetime.now().isoformat())
+            )
+        db.commit()
+        return redirect(url_for('history'))
+
+    entry = db.execute(
+        f'SELECT * FROM journal_entries WHERE date = ? AND {uf}',
+        (date_str, *uf_params)
+    ).fetchone()
+
+    return render_template('edit_journal.html', entry=entry, entry_date=date_str)
+
+
 @app.route('/tasks/add', methods=['POST'])
 @login_required
 def add_task():
     """Add new task."""
     title = request.form.get('title', '').strip()
+    due_date = request.form.get('due_date', '').strip() or None
     if title:
         db = get_db()
         user_id = get_current_user_id()
-        db.execute('INSERT INTO tasks (title, user_id) VALUES (?, ?)', (title, user_id))
+        db.execute('INSERT INTO tasks (title, user_id, due_date) VALUES (?, ?, ?)',
+                   (title, user_id, due_date))
         db.commit()
 
     return redirect(url_for('index'))
@@ -586,7 +709,7 @@ def delete_blip(blip_id):
 @app.route('/history')
 @login_required
 def history():
-    """View journal history."""
+    """View journal history with cross-feature integration."""
     db = get_db()
     uf, uf_params = user_filter()
     page = request.args.get('page', 1, type=int)
@@ -599,7 +722,27 @@ def history():
     has_more = len(entries) > per_page
     entries = entries[:per_page]
 
-    return render_template('history.html', entries=entries, page=page, has_more=has_more)
+    # Enrich entries with tasks completed and blips surfaced that day
+    enriched = []
+    for entry in entries:
+        day = entry['date']
+        tasks_done = db.execute(
+            f"SELECT title FROM tasks WHERE completed = 1 AND DATE(completed_at) = ? AND {uf}",
+            (day, *uf_params)
+        ).fetchall()
+        blips_surfaced = db.execute(
+            f'''SELECT b.content FROM blips b
+                JOIN daily_blips db ON b.id = db.blip_id
+                WHERE db.journal_date = ? AND {uf.replace('user_id', 'db.user_id')}''',
+            (day, *uf_params)
+        ).fetchall()
+        enriched.append({
+            'entry': entry,
+            'tasks_done': tasks_done,
+            'blips_surfaced': blips_surfaced,
+        })
+
+    return render_template('history.html', enriched=enriched, page=page, has_more=has_more)
 
 
 @app.route('/completed-tasks')
@@ -686,6 +829,136 @@ def revoke_api_token(token_id):
 
 
 ## Auth toggle removed — auth is always on for SaaS
+
+
+@app.route('/search')
+@login_required
+def search():
+    """Global search across journal, tasks, and blips."""
+    q = request.args.get('q', '').strip()
+    results = {'journal': [], 'tasks': [], 'blips': []}
+
+    if q:
+        db = get_db()
+        uf, uf_params = user_filter()
+        search_term = q
+
+        # Search journal entries
+        results['journal'] = db.execute(
+            f'''SELECT je.* FROM journal_entries je
+                JOIN journal_fts ON je.id = journal_fts.rowid
+                WHERE journal_fts MATCH ? AND {uf.replace('user_id', 'je.user_id')}
+                ORDER BY je.date DESC LIMIT 20''',
+            (search_term, *uf_params)
+        ).fetchall()
+
+        # Search blips
+        results['blips'] = db.execute(
+            f'''SELECT b.* FROM blips b
+                JOIN blips_fts ON b.id = blips_fts.rowid
+                WHERE blips_fts MATCH ? AND {uf.replace('user_id', 'b.user_id')}
+                ORDER BY b.created_at DESC LIMIT 20''',
+            (search_term, *uf_params)
+        ).fetchall()
+
+        # Search tasks
+        results['tasks'] = db.execute(
+            f'''SELECT t.* FROM tasks t
+                JOIN tasks_fts ON t.id = tasks_fts.rowid
+                WHERE tasks_fts MATCH ? AND {uf.replace('user_id', 't.user_id')}
+                ORDER BY t.created_at DESC LIMIT 20''',
+            (search_term, *uf_params)
+        ).fetchall()
+
+    total = len(results['journal']) + len(results['tasks']) + len(results['blips'])
+    return render_template('search.html', q=q, results=results, total=total)
+
+
+@app.route('/export/json')
+@login_required
+def export_json():
+    """Export all user data as JSON."""
+    db = get_db()
+    uf, uf_params = user_filter()
+
+    data = {
+        'exported_at': datetime.now().isoformat(),
+        'journal_entries': [dict(r) for r in db.execute(
+            f'SELECT date, content, created_at, updated_at FROM journal_entries WHERE {uf} ORDER BY date DESC',
+            uf_params
+        ).fetchall()],
+        'tasks': [dict(r) for r in db.execute(
+            f'SELECT title, completed, due_date, created_at, completed_at FROM tasks WHERE {uf} ORDER BY created_at DESC',
+            uf_params
+        ).fetchall()],
+        'blips': [dict(r) for r in db.execute(
+            f'SELECT content, created_at, updated_at, surface_count FROM blips WHERE {uf} ORDER BY created_at DESC',
+            uf_params
+        ).fetchall()],
+    }
+
+    return Response(
+        json.dumps(data, indent=2),
+        mimetype='application/json',
+        headers={'Content-Disposition': f'attachment; filename=casey-export-{date.today().isoformat()}.json'}
+    )
+
+
+@app.route('/export/csv')
+@login_required
+def export_csv():
+    """Export all user data as CSV (zip of CSVs as a single combined CSV)."""
+    db = get_db()
+    uf, uf_params = user_filter()
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Journal entries
+    writer.writerow(['--- Journal Entries ---'])
+    writer.writerow(['date', 'content', 'created_at', 'updated_at'])
+    for r in db.execute(
+        f'SELECT date, content, created_at, updated_at FROM journal_entries WHERE {uf} ORDER BY date DESC',
+        uf_params
+    ).fetchall():
+        writer.writerow([r['date'], r['content'], r['created_at'], r['updated_at']])
+
+    writer.writerow([])
+    writer.writerow(['--- Tasks ---'])
+    writer.writerow(['title', 'completed', 'due_date', 'created_at', 'completed_at'])
+    for r in db.execute(
+        f'SELECT title, completed, due_date, created_at, completed_at FROM tasks WHERE {uf} ORDER BY created_at DESC',
+        uf_params
+    ).fetchall():
+        writer.writerow([r['title'], r['completed'], r['due_date'], r['created_at'], r['completed_at']])
+
+    writer.writerow([])
+    writer.writerow(['--- Blips ---'])
+    writer.writerow(['content', 'created_at', 'updated_at', 'surface_count'])
+    for r in db.execute(
+        f'SELECT content, created_at, updated_at, surface_count FROM blips WHERE {uf} ORDER BY created_at DESC',
+        uf_params
+    ).fetchall():
+        writer.writerow([r['content'], r['created_at'], r['updated_at'], r['surface_count']])
+
+    return Response(
+        output.getvalue(),
+        mimetype='text/csv',
+        headers={'Content-Disposition': f'attachment; filename=casey-export-{date.today().isoformat()}.csv'}
+    )
+
+
+@app.route('/health')
+@csrf.exempt
+def health():
+    """Health check endpoint."""
+    try:
+        db = sqlite3.connect(DATABASE)
+        db.execute('SELECT 1').fetchone()
+        db.close()
+        return jsonify({'status': 'healthy', 'version': app.config['VERSION']}), 200
+    except Exception as e:
+        return jsonify({'status': 'unhealthy', 'error': str(e)}), 503
 
 
 @app.route('/settings/account')

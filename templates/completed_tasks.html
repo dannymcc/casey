@@ -57,7 +57,7 @@
                     <div class="completed-check">
                         <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5l2.5 2.5L8 3"/></svg>
                     </div>
-                    <span class="completed-title">{{ task.title }}</span>
+                    <span class="completed-title">{{ task.title }}{% if task.due_date %} <span style="text-decoration: none; font-size: 11px; color: var(--text-muted);">(due {{ task.due_date | uk_date }})</span>{% endif %}</span>
                     <span class="completed-date">{{ task.completed_at | uk_date if task.completed_at else '' }}</span>
                 </div>
             {% endfor %}

@@ -2,3 +2,4 @@ Flask==3.0.0
 Flask-WTF==1.2.1
 Flask-Limiter==3.5.1
 gunicorn==21.2.0
+Markdown==3.7
