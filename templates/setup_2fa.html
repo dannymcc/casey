@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Two-Factor Authentication - Casey{% endblock %}
+
+{% block extra_styles %}
+.totp-secret {
+    font-family: var(--mono);
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    background: var(--border-light);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
+    word-break: break-all;
+    text-align: center;
+    margin: 1rem 0;
+    user-select: all;
+}
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 480px;">
+    <a href="/settings" class="back-link">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12L6 8l4-4"/></svg>
+        Back to Settings
+    </a>
+
+    <h1 class="page-title">Two-Factor Authentication</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if has_2fa %}
+    <div class="card">
+        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 1rem;">
+            Two-factor authentication is <strong style="color: var(--accent);">enabled</strong> on your account.
+        </p>
+        <form method="POST" action="/settings/2fa">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="action" value="disable">
+            <div class="form-group">
+                <label for="password">Enter your password to disable 2FA</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" style="background: var(--danger); color: white;">Disable 2FA</button>
+        </form>
+    </div>
+
+    {% elif step == 'verify' %}
+    <div class="card">
+        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 1rem;">
+            Add this secret to your authenticator app (Google Authenticator, Authy, 1Password, etc.):
+        </p>
+
+        <div class="totp-secret">{{ secret }}</div>
+
+        <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 1rem;">
+            Or scan this URI in your authenticator:<br>
+            <code style="font-size: 11px; word-break: break-all;">{{ provisioning_uri }}</code>
+        </p>
+
+        <form method="POST" action="/settings/2fa">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="action" value="enable">
+            <input type="hidden" name="secret" value="{{ secret }}">
+            <div class="form-group">
+                <label for="code">Enter the 6-digit code to verify setup</label>
+                <input type="text" id="code" name="code" required
+                       autocomplete="one-time-code" inputmode="numeric" pattern="[0-9]*"
+                       maxlength="6" placeholder="000000"
+                       style="text-align: center; font-size: 1.25rem; letter-spacing: 0.2em; font-family: var(--mono);">
+            </div>
+            <button type="submit">Enable 2FA</button>
+        </form>
+    </div>
+
+    {% else %}
+    <div class="card">
+        <p style="font-size: 14px; color: var(--text-secondary); margin-bottom: 1rem;">
+            Two-factor authentication adds an extra layer of security to your account. You'll need an authenticator app to generate codes.
+        </p>
+        <form method="POST" action="/settings/2fa">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <input type="hidden" name="action" value="enable">
+            <button type="submit">Set up 2FA</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

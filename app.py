@@ -14,6 +14,7 @@ import os
 import secrets
 import hashlib
 import markdown
+import pyotp
 
 app = Flask(__name__)
 
@@ -236,6 +237,8 @@ def init_db():
         first_user = db.execute('SELECT id FROM users ORDER BY id LIMIT 1').fetchone()
         if first_user:
             db.execute('UPDATE users SET is_admin = 1 WHERE id = ?', (first_user[0],))
+    if 'totp_secret' not in columns:
+        db.execute('ALTER TABLE users ADD COLUMN totp_secret TEXT')
 
     # Full-text search virtual tables
     db.executescript('''
@@ -511,6 +514,11 @@ def login():
         user = db.execute('SELECT * FROM users WHERE username = ?', (username,)).fetchone()
 
         if user and check_password_hash(user['password_hash'], password):
+            if user['totp_secret']:
+                # 2FA enabled: store pending auth and redirect to TOTP page
+                session['pending_2fa_user_id'] = user['id']
+                session['pending_2fa_username'] = user['username']
+                return redirect(url_for('verify_2fa'))
             session.permanent = True
             session['user_id'] = user['id']
             session['username'] = user['username']
@@ -571,6 +579,85 @@ def register():
         return redirect(url_for('index'))
 
     return render_template('register.html')
+
+
+@app.route('/verify-2fa', methods=['GET', 'POST'])
+def verify_2fa():
+    """Verify TOTP code during login."""
+    if 'pending_2fa_user_id' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        code = request.form.get('code', '').strip()
+        db = get_db()
+        user = db.execute('SELECT * FROM users WHERE id = ?',
+                          (session['pending_2fa_user_id'],)).fetchone()
+        if user and user['totp_secret']:
+            totp = pyotp.TOTP(user['totp_secret'])
+            if totp.verify(code, valid_window=1):
+                user_id = session.pop('pending_2fa_user_id')
+                username = session.pop('pending_2fa_username')
+                session.permanent = True
+                session['user_id'] = user_id
+                session['username'] = username
+                audit_log('login', f'User {username} logged in (2FA)')
+                return redirect(url_for('index'))
+        flash('Invalid verification code.', 'error')
+
+    return render_template('verify_2fa.html')
+
+
+@app.route('/settings/2fa', methods=['GET', 'POST'])
+@login_required
+def setup_2fa():
+    """Set up or disable two-factor authentication."""
+    db = get_db()
+    user = db.execute('SELECT totp_secret FROM users WHERE id = ?',
+                      (session['user_id'],)).fetchone()
+    has_2fa = bool(user and user['totp_secret'])
+
+    if request.method == 'POST':
+        action = request.form.get('action')
+        if action == 'enable':
+            secret = pyotp.random_base32()
+            code = request.form.get('code', '').strip()
+            totp = pyotp.TOTP(secret)
+            stored_secret = request.form.get('secret', '')
+            if stored_secret:
+                # Verify the code matches the secret being set up
+                totp = pyotp.TOTP(stored_secret)
+                if totp.verify(code, valid_window=1):
+                    db.execute('UPDATE users SET totp_secret = ? WHERE id = ?',
+                               (stored_secret, session['user_id']))
+                    db.commit()
+                    audit_log('2fa_enable', '2FA enabled')
+                    flash('Two-factor authentication enabled.', 'success')
+                    return redirect(url_for('settings'))
+                else:
+                    flash('Invalid code. Please try again.', 'error')
+                    return render_template('setup_2fa.html', secret=stored_secret,
+                                           provisioning_uri=pyotp.TOTP(stored_secret).provisioning_uri(
+                                               session.get('username', ''), issuer_name='Casey'),
+                                           has_2fa=False, step='verify')
+            # Generate new secret and show setup page
+            uri = totp.provisioning_uri(session.get('username', ''), issuer_name='Casey')
+            return render_template('setup_2fa.html', secret=secret,
+                                   provisioning_uri=uri, has_2fa=False, step='verify')
+        elif action == 'disable':
+            password = request.form.get('password', '')
+            user_full = db.execute('SELECT * FROM users WHERE id = ?',
+                                   (session['user_id'],)).fetchone()
+            if user_full and check_password_hash(user_full['password_hash'], password):
+                db.execute('UPDATE users SET totp_secret = NULL WHERE id = ?',
+                           (session['user_id'],))
+                db.commit()
+                audit_log('2fa_disable', '2FA disabled')
+                flash('Two-factor authentication disabled.', 'success')
+            else:
+                flash('Incorrect password.', 'error')
+            return redirect(url_for('setup_2fa'))
+
+    return render_template('setup_2fa.html', has_2fa=has_2fa, step='initial')
 
 
 @app.route('/logout', methods=['POST'])
