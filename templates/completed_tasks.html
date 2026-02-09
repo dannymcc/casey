@@ -5,24 +5,24 @@
 {% block content %}
 <div class="card">
     <h2>Completed Tasks</h2>
-    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 2rem;">
+    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 2rem;">
         Last 50 completed tasks
     </p>
-    
+
     {% if tasks %}
         <ul class="task-list">
             {% for task in tasks %}
-                <li class="task-item" style="opacity: 0.8;">
-                    <span style="flex: 1;">✓ {{ task.title }}</span>
-                    <span style="font-size: 0.75rem; color: var(--text-secondary);">
-                        {{ task.completed_at | uk_date if task.completed_at else 'Unknown' }}
+                <li class="task-item" style="opacity: 0.75;">
+                    <span style="flex: 1; font-size: 14px; text-decoration: line-through; color: var(--text-secondary);">{{ task.title }}</span>
+                    <span style="font-size: 12px; color: var(--text-muted); white-space: nowrap; margin-left: 1rem;">
+                        {{ task.completed_at | uk_date if task.completed_at else '' }}
                     </span>
                 </li>
             {% endfor %}
         </ul>
     {% else %}
         <div class="empty-state">
-            No completed tasks yet
+            No completed tasks yet.
         </div>
     {% endif %}
 </div>

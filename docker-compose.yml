@@ -13,6 +13,7 @@ services:
       - SECRET_KEY=${SECRET_KEY:-change-this-in-production}
       - VERSION=${VERSION:-dev}
       - FLASK_DEBUG=False
+      - AUTH_ENABLED=${AUTH_ENABLED:-false}
     restart: unless-stopped
     networks:
       - docker_default

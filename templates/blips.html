@@ -5,20 +5,22 @@
 {% block content %}
 <div class="card">
     <h2>All Blips</h2>
-    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
+    <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 1.5rem;">
         Ongoing topics, questions, or ideas you're tracking. Add to them as new information comes along.
     </p>
-    
+
     <form method="POST" action="/blips/add" style="margin-bottom: 2rem;">
-        <textarea name="content" rows="3" placeholder="Topic, question, or idea to track..." required></textarea>
-        <button type="submit" style="margin-top: 0.5rem;">Add Blip</button>
+        <textarea name="content" rows="3" placeholder="Topic, question, or idea to track..." required style="min-height: 80px;"></textarea>
+        <div style="margin-top: 0.5rem;">
+            <button type="submit">Add Blip</button>
+        </div>
     </form>
-    
+
     {% if blips %}
         {% for blip in blips %}
-            <div class="blip" style="display: flex; justify-content: space-between; align-items: start;">
-                <div style="flex: 1;">
-                    {{ blip.content }}
+            <div class="blip" style="display: flex; justify-content: space-between; align-items: start; gap: 1rem;">
+                <div style="flex: 1; min-width: 0;">
+                    <div style="white-space: pre-wrap;">{{ blip.content }}</div>
                     <div class="blip-meta">
                         {% if blip.updated_at and blip.updated_at != blip.created_at %}
                             Updated {{ blip.updated_at | uk_date }}
@@ -26,23 +28,23 @@
                             Created {{ blip.created_at | uk_date }}
                         {% endif %}
                         {% if blip.last_surfaced %}
-                            • Last surfaced {{ blip.last_surfaced | uk_date }} ({{ blip.surface_count }}×)
+                            &middot; Last surfaced {{ blip.last_surfaced | uk_date }} ({{ blip.surface_count }}&times;)
                         {% else %}
-                            • Never surfaced
+                            &middot; Never surfaced
                         {% endif %}
                     </div>
                 </div>
-                <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
-                    <a href="/blips/{{ blip.id }}/edit" class="btn-ghost" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; text-decoration: none; display: inline-block;">Edit</a>
-                    <form method="POST" action="/blips/{{ blip.id }}/delete">
-                        <button type="submit" class="btn-ghost btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">✕</button>
+                <div style="display: flex; gap: 0.25rem; flex-shrink: 0;">
+                    <a href="/blips/{{ blip.id }}/edit" class="btn-ghost" style="text-decoration: none; font-size: 13px;">Edit</a>
+                    <form method="POST" action="/blips/{{ blip.id }}/delete" style="margin: 0;">
+                        <button type="submit" class="btn-ghost btn-danger" style="font-size: 13px;">&times;</button>
                     </form>
                 </div>
             </div>
         {% endfor %}
     {% else %}
         <div class="empty-state">
-            No blips yet. Add your first quick thought above!
+            No blips yet. Add your first thought above.
         </div>
     {% endif %}
 </div>

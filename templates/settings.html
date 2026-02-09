@@ -2,41 +2,49 @@
 
 {% block title %}Settings - Casey{% endblock %}
 
-{% block content %}
-<div class="card" style="max-width: 700px; margin: 0 auto;">
-    <h2>Settings</h2>
-    
-    <div style="margin-top: 2rem;">
-        <div style="padding: 1.25rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">Version</div>
-                    <div style="font-size: 14px; color: var(--text-secondary);">Current version of Casey</div>
-                </div>
-                <div style="font-family: 'Monaco', 'Courier New', monospace; font-size: 14px; color: var(--primary); font-weight: 600;">
-                    v{{ version }}
-                </div>
-            </div>
-        </div>
-        
-        <a href="/settings/api" style="text-decoration: none; display: block;">
-            <div style="padding: 1.25rem; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 1.5rem; transition: all 0.15s ease; cursor: pointer;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                        <div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">API Settings</div>
-                        <div style="font-size: 14px; color: var(--text-secondary);">Manage API keys and access</div>
-                    </div>
-                    <div style="color: var(--text-muted); font-size: 18px;">→</div>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
+{% block extra_styles %}
+.settings-row {
+    padding: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
 
-<style>
-a[href="/settings/api"] div:hover {
+a.settings-row {
+    text-decoration: none;
+    cursor: pointer;
+}
+
+a.settings-row:hover {
     border-color: var(--primary);
     background: var(--accent-blue);
 }
-</style>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 700px; margin: 0 auto;">
+    <h2>Settings</h2>
+
+    <div style="margin-top: 1.5rem;">
+        <div class="settings-row">
+            <div>
+                <div style="font-weight: 600; font-size: 14px; color: var(--text-primary); margin-bottom: 0.125rem;">Version</div>
+                <div style="font-size: 13px; color: var(--text-secondary);">Current build version</div>
+            </div>
+            <code style="font-family: 'SF Mono', 'Monaco', 'Courier New', monospace; font-size: 13px; color: var(--primary); font-weight: 600;">v{{ version }}</code>
+        </div>
+
+        <a href="/settings/api" class="settings-row">
+            <div>
+                <div style="font-weight: 600; font-size: 14px; color: var(--text-primary); margin-bottom: 0.125rem;">API Settings</div>
+                <div style="font-size: 13px; color: var(--text-secondary);">Manage API keys and access</div>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="color: var(--text-muted);"><path d="M6 4L10 8L6 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+    </div>
+</div>
 {% endblock %}

@@ -5,42 +5,42 @@
 {% block content %}
 <div style="max-width: 700px; margin: 0 auto;">
     <div style="margin-bottom: 1.5rem;">
-        <a href="/settings" style="color: var(--text-secondary); text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 0.5rem;">
-            ← Back to Settings
+        <a href="/settings" style="color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 0.375rem;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 3.5L5 7L8.5 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Back to Settings
         </a>
     </div>
-    
+
     <div class="card">
         <h2>API Settings</h2>
-        
-        <p style="color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6;">
+
+        <p style="color: var(--text-secondary); margin-bottom: 2rem; line-height: 1.6; font-size: 14px;">
             Use your API key to access Casey programmatically. Keep this key secure and never share it publicly.
         </p>
-        
-        <div style="background: var(--accent-blue); border-left: 3px solid var(--primary); padding: 1.25rem; border-radius: 6px; margin-bottom: 2rem;">
-            <div style="font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary); font-size: 14px;">Your API Key</div>
-            <code style="background: var(--bg); padding: 0.75rem; border-radius: 4px; font-family: 'Monaco', 'Courier New', monospace; font-size: 13px; display: block; color: var(--text-primary); word-break: break-all; line-height: 1.6;">{{ api_key }}</code>
+
+        <div style="background: var(--accent-blue); border-left: 3px solid var(--primary); padding: 1.25rem; border-radius: 0 var(--radius-sm) var(--radius-sm) 0; margin-bottom: 2rem;">
+            <div style="font-weight: 600; margin-bottom: 0.75rem; color: var(--text-primary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em;">Your API Key</div>
+            <code style="background: var(--bg); padding: 0.75rem; border-radius: 4px; font-family: 'SF Mono', 'Monaco', 'Courier New', monospace; font-size: 12px; display: block; color: var(--text-primary); word-break: break-all; line-height: 1.6; border: 1px solid var(--border);">{{ api_key }}</code>
             <div style="font-size: 12px; color: var(--text-secondary); margin-top: 0.75rem;">
-                Include this in the <code style="background: var(--bg); padding: 0.125rem 0.375rem; border-radius: 3px;">X-API-Key</code> header for all API requests.
+                Include in the <code style="background: var(--bg); padding: 0.125rem 0.375rem; border-radius: 3px; font-size: 11px;">X-API-Key</code> header for all API requests.
             </div>
         </div>
-        
+
         <div style="border-top: 1px solid var(--border); padding-top: 1.5rem;">
-            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Quick Links</h3>
-            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                <a href="/api" style="color: var(--primary); text-decoration: none; font-size: 14px; font-weight: 500;">
-                    View API Documentation →
-                </a>
-            </div>
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 0.75rem;">Quick Links</h3>
+            <a href="/api" style="color: var(--primary); text-decoration: none; font-size: 14px; font-weight: 500;">
+                View API Documentation
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style="vertical-align: middle; margin-left: 0.25rem;"><path d="M4 3L8 6L4 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
         </div>
-        
-        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
-            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 1rem;">Security</h3>
-            <ul style="list-style: none; padding: 0; margin: 0; color: var(--text-secondary); font-size: 14px; line-height: 1.8;">
-                <li style="margin-bottom: 0.5rem;">• Never commit your API key to version control</li>
-                <li style="margin-bottom: 0.5rem;">• Store it securely as an environment variable</li>
-                <li style="margin-bottom: 0.5rem;">• Rotate your key if it's ever compromised</li>
-                <li>• Use HTTPS for all API requests</li>
+
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+            <h3 style="font-size: 14px; font-weight: 600; margin-bottom: 0.75rem;">Security</h3>
+            <ul style="list-style: none; padding: 0; margin: 0; color: var(--text-secondary); font-size: 13px; line-height: 2;">
+                <li>Never commit your API key to version control</li>
+                <li>Store it securely as an environment variable</li>
+                <li>Rotate your key if it's ever compromised</li>
+                <li>Use HTTPS for all API requests</li>
             </ul>
         </div>
     </div>

@@ -11,28 +11,31 @@
     <div>
         <!-- Journal Entry -->
         <div class="card">
-            <h2>Journal</h2>
-            <form method="POST" action="/journal/save">
-                <textarea name="content" rows="12" placeholder="What's on your mind today?">{{ journal.content if journal else '' }}</textarea>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+                <h2 style="margin-bottom: 0;">Journal</h2>
+                <span id="save-indicator" class="save-indicator">Saved</span>
+            </div>
+            <form id="journal-form" method="POST" action="/journal/save">
+                <textarea id="journal-content" name="content" rows="12" placeholder="What's on your mind today?">{{ journal.content if journal else '' }}</textarea>
                 <div class="btn-group">
                     <button type="submit">Save Entry</button>
                 </div>
             </form>
         </div>
-        
+
         <!-- Today's Blips -->
         <div class="card">
             <h2>Blips</h2>
             <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 1.25rem;">
                 Random thoughts surfaced to spark new ideas
             </p>
-            
+
             {% if blips %}
                 {% for blip in blips %}
                     <div class="blip">
                         {{ blip.content }}
                         <div class="blip-meta">
-                            Surfaced {{ blip.surface_count }}× • {{ blip.created_at | uk_date }}
+                            Surfaced {{ blip.surface_count }}&times; &middot; {{ blip.created_at | uk_date }}
                         </div>
                     </div>
                 {% endfor %}
@@ -43,39 +46,86 @@
             {% endif %}
         </div>
     </div>
-    
+
     <div>
         <!-- Tasks -->
         <div class="card">
             <h2>Tasks</h2>
-            
-            <form method="POST" action="/tasks/add" style="margin-bottom: 1.5rem;">
-                <input type="text" name="title" placeholder="Add a task..." required>
-                <button type="submit" style="margin-top: 0.75rem; width: 100%;">Add Task</button>
+
+            <form method="POST" action="/tasks/add" style="margin-bottom: 1.25rem;">
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" name="title" placeholder="Add a task..." required style="flex: 1;">
+                    <button type="submit" style="white-space: nowrap;">Add</button>
+                </div>
             </form>
-            
+
             {% if tasks %}
                 <ul class="task-list">
                     {% for task in tasks %}
                         <li class="task-item {{ 'completed' if task.completed else '' }}">
-                            <form method="POST" action="/tasks/{{ task.id }}/toggle" style="display: flex; align-items: center; flex: 1;">
-                                <input type="checkbox" 
+                            <form method="POST" action="/tasks/{{ task.id }}/toggle" style="display: flex; align-items: center; flex: 1; margin: 0;">
+                                <input type="checkbox"
                                        {{ 'checked' if task.completed else '' }}
                                        onchange="this.form.submit()">
-                                <span style="flex: 1;">{{ task.title }}</span>
+                                <span style="flex: 1; font-size: 14px;">{{ task.title }}</span>
                             </form>
-                            <form method="POST" action="/tasks/{{ task.id }}/delete" style="margin-left: 0.5rem;">
-                                <button type="submit" class="btn-ghost btn-danger" style="padding: 0.375rem 0.625rem; font-size: 13px;">×</button>
+                            <form method="POST" action="/tasks/{{ task.id }}/delete" style="margin: 0;">
+                                <button type="submit" class="btn-ghost btn-danger task-delete" title="Delete task" style="padding: 0.25rem 0.5rem; font-size: 14px; line-height: 1;">&times;</button>
                             </form>
                         </li>
                     {% endfor %}
                 </ul>
             {% else %}
-                <div class="empty-state">
+                <div class="empty-state" style="padding: 2rem 1rem;">
                     No active tasks
                 </div>
             {% endif %}
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var textarea = document.getElementById('journal-content');
+    var indicator = document.getElementById('save-indicator');
+    var timer = null;
+    var lastSaved = textarea.value;
+
+    function showIndicator(text, className) {
+        indicator.textContent = text;
+        indicator.className = 'save-indicator visible' + (className ? ' ' + className : '');
+        if (className === 'saved') {
+            setTimeout(function() {
+                indicator.className = 'save-indicator';
+            }, 2000);
+        }
+    }
+
+    function autoSave() {
+        if (textarea.value === lastSaved) return;
+        showIndicator('Saving...', '');
+
+        var form = new FormData();
+        form.append('content', textarea.value);
+
+        fetch('/journal/save', {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            body: form
+        }).then(function(r) {
+            if (r.ok) {
+                lastSaved = textarea.value;
+                showIndicator('Saved', 'saved');
+            }
+        }).catch(function() {});
+    }
+
+    textarea.addEventListener('input', function() {
+        clearTimeout(timer);
+        timer = setTimeout(autoSave, 1500);
+    });
+})();
+</script>
 {% endblock %}

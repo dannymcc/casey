@@ -5,30 +5,31 @@
 {% block content %}
 <div style="max-width: 700px; margin: 0 auto;">
     <div style="margin-bottom: 1.5rem;">
-        <a href="/blips" style="color: var(--text-secondary); text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 0.5rem;">
-            ← Back to Blips
+        <a href="/blips" style="color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500; display: inline-flex; align-items: center; gap: 0.375rem;">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M8.5 3.5L5 7L8.5 10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Back to Blips
         </a>
     </div>
-    
+
     <div class="card">
         <h2>Edit Blip</h2>
-        
+
         <p style="color: var(--text-secondary); margin-bottom: 1.5rem; line-height: 1.6; font-size: 14px;">
             Update this ongoing topic or idea. Add new information as it comes along.
         </p>
-        
+
         <form method="POST" action="/blips/{{ blip.id }}/edit">
-            <textarea name="content" rows="6" placeholder="Your ongoing thought, question, or topic..." required>{{ blip.content }}</textarea>
+            <textarea name="content" rows="6" placeholder="Your ongoing thought, question, or topic..." required style="min-height: 140px;">{{ blip.content }}</textarea>
             <div class="btn-group">
                 <button type="submit">Save Changes</button>
-                <a href="/blips" class="btn btn-secondary" style="display: inline-block; text-align: center;">Cancel</a>
+                <a href="/blips" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
-        
-        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-muted);">
-            Created: {{ blip.created_at | uk_date }}
+
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-size: 12px; color: var(--text-muted);">
+            Created {{ blip.created_at | uk_date }}
             {% if blip.updated_at and blip.updated_at != blip.created_at %}
-            <br>Last updated: {{ blip.updated_at | uk_date }}
+             &middot; Last updated {{ blip.updated_at | uk_date }}
             {% endif %}
         </div>
     </div>
