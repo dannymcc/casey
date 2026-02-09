@@ -98,4 +98,4 @@ ports:
 
 ---
 
-Built with ❤️ as part of the Valdan product suite.
+Built for personal productivity.

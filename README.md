@@ -135,8 +135,8 @@ FLASK_DEBUG=False
 - No authentication (single-user, private deployment)
 - No fancy JS frameworks (pure HTML forms)
 - No cloud sync (just backup your SQLite file)
-- Monospace font (programmer aesthetic)
-- Valdan blue accent color
+- Things-inspired aesthetic (clean, crisp, elegant)
+- Soft colors and excellent spacing
 
 **Built for focus:**
 - One page for today (journal + tasks + blips)
@@ -172,7 +172,3 @@ docker cp casey:/app/casey.db ./backup-$(date +%Y-%m-%d).db
 ## Why "Casey"?
 
 Named after Casey Newton, whose productivity system inspired this tool. Built in one night as a focused alternative to complex note-taking apps.
-
----
-
-**A Valdan product** · [valdan.dmcc.io](https://valdan.dmcc.io)
