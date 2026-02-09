@@ -10,7 +10,6 @@ import secrets
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 app.config['VERSION'] = os.environ.get('VERSION', 'dev')
-app.config['AUTH_ENABLED'] = os.environ.get('AUTH_ENABLED', 'false').lower() == 'true'
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
@@ -104,6 +103,11 @@ def init_db():
             last_used_at TIMESTAMP,
             FOREIGN KEY (user_id) REFERENCES users (id)
         );
+
+        CREATE TABLE IF NOT EXISTS app_settings (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );
     ''')
 
     # Migrations for existing databases
@@ -161,15 +165,29 @@ def init_db():
             db.execute('INSERT INTO api_tokens (name, token) VALUES (?, ?)',
                        ('Default', secrets.token_urlsafe(32)))
 
+    # Seed auth_enabled setting if not present (migrate from env var)
+    existing_auth = db.execute("SELECT value FROM app_settings WHERE key = 'auth_enabled'").fetchone()
+    if not existing_auth:
+        env_auth = os.environ.get('AUTH_ENABLED', 'false').lower() == 'true'
+        db.execute("INSERT INTO app_settings (key, value) VALUES ('auth_enabled', ?)",
+                   ('true' if env_auth else 'false',))
+
     db.commit()
     db.close()
 
 
 # --- Auth helpers ---
 
+def is_auth_enabled():
+    """Check if authentication is enabled (reads from DB)."""
+    db = get_db()
+    row = db.execute("SELECT value FROM app_settings WHERE key = 'auth_enabled'").fetchone()
+    return row is not None and row['value'] == 'true'
+
+
 def get_current_user_id():
     """Get current user ID, or None if auth is disabled."""
-    if not app.config['AUTH_ENABLED']:
+    if not is_auth_enabled():
         return None
     return session.get('user_id')
 
@@ -178,7 +196,7 @@ def login_required(f):
     """Decorator: redirect to login if auth enabled and user not logged in."""
     @wraps(f)
     def decorated(*args, **kwargs):
-        if app.config['AUTH_ENABLED'] and 'user_id' not in session:
+        if is_auth_enabled() and 'user_id' not in session:
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated
@@ -227,8 +245,8 @@ def uk_date_long_filter(date_string):
 def inject_auth():
     """Make auth state available to all templates."""
     return {
-        'auth_enabled': app.config['AUTH_ENABLED'],
-        'current_user': session.get('username') if app.config['AUTH_ENABLED'] else None,
+        'auth_enabled': is_auth_enabled(),
+        'current_user': session.get('username') if is_auth_enabled() else None,
     }
 
 
@@ -236,7 +254,7 @@ def inject_auth():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if not app.config['AUTH_ENABLED']:
+    if not is_auth_enabled():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
@@ -263,7 +281,7 @@ def login():
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    if not app.config['AUTH_ENABLED']:
+    if not is_auth_enabled():
         return redirect(url_for('index'))
 
     if request.method == 'POST':
@@ -308,7 +326,7 @@ def register():
 @app.route('/logout', methods=['POST'])
 def logout():
     session.clear()
-    return redirect(url_for('login') if app.config['AUTH_ENABLED'] else url_for('index'))
+    return redirect(url_for('login') if is_auth_enabled() else url_for('index'))
 
 
 # --- Page routes ---
@@ -626,11 +644,34 @@ def revoke_api_token(token_id):
     return redirect(url_for('settings_api'))
 
 
+@app.route('/settings/auth', methods=['POST'])
+@login_required
+def settings_auth():
+    """Toggle authentication on or off."""
+    db = get_db()
+    currently_enabled = is_auth_enabled()
+
+    if currently_enabled:
+        # Disabling auth — must be logged in (enforced by @login_required)
+        db.execute("UPDATE app_settings SET value = 'false' WHERE key = 'auth_enabled'")
+        db.commit()
+        session.clear()
+        return redirect(url_for('settings'))
+    else:
+        # Enabling auth
+        db.execute("UPDATE app_settings SET value = 'true' WHERE key = 'auth_enabled'")
+        db.commit()
+        user_count = db.execute('SELECT COUNT(*) FROM users').fetchone()[0]
+        if user_count == 0:
+            return redirect(url_for('register'))
+        return redirect(url_for('login'))
+
+
 @app.route('/settings/account')
 @login_required
 def settings_account():
     """Account settings page."""
-    if not app.config['AUTH_ENABLED']:
+    if not is_auth_enabled():
         return redirect(url_for('settings'))
     return render_template('settings_account.html')
 
@@ -639,7 +680,7 @@ def settings_account():
 @login_required
 def change_password():
     """Change user password."""
-    if not app.config['AUTH_ENABLED']:
+    if not is_auth_enabled():
         return redirect(url_for('settings'))
 
     current_password = request.form.get('current_password', '')

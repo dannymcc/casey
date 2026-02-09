@@ -53,11 +53,27 @@ a.settings-row:hover {
     <p class="page-desc">Manage your Casey configuration</p>
 
     <div class="card">
+        <div class="settings-row">
+            <div>
+                <div class="settings-label">Authentication</div>
+                <div class="settings-desc">
+                    {% if auth_enabled %}On — signed in as {{ current_user }}{% else %}Off{% endif %}
+                </div>
+            </div>
+            <form method="POST" action="/settings/auth" style="margin: 0;">
+                {% if auth_enabled %}
+                <button type="submit" class="btn btn-secondary" style="font-size: 12px; padding: 0.25rem 0.75rem;">Disable</button>
+                {% else %}
+                <button type="submit" class="btn" style="font-size: 12px; padding: 0.25rem 0.75rem;">Enable</button>
+                {% endif %}
+            </form>
+        </div>
+
         {% if auth_enabled %}
         <a href="/settings/account" class="settings-row">
             <div>
                 <div class="settings-label">Account</div>
-                <div class="settings-desc">Signed in as {{ current_user }}</div>
+                <div class="settings-desc">Change password and account settings</div>
             </div>
             <span class="settings-arrow">&rsaquo;</span>
         </a>
