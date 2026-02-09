@@ -6,11 +6,11 @@
 <div class="card">
     <h2>All Blips</h2>
     <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">
-        Capture quick thoughts and ideas. They'll surface randomly in your daily journal.
+        Ongoing topics, questions, or ideas you're tracking. Add to them as new information comes along.
     </p>
     
     <form method="POST" action="/blips/add" style="margin-bottom: 2rem;">
-        <textarea name="content" rows="3" placeholder="Quick thought or idea..." required></textarea>
+        <textarea name="content" rows="3" placeholder="Topic, question, or idea to track..." required></textarea>
         <button type="submit" style="margin-top: 0.5rem;">Add Blip</button>
     </form>
     
@@ -20,7 +20,11 @@
                 <div style="flex: 1;">
                     {{ blip.content }}
                     <div class="blip-meta">
-                        Created {{ blip.created_at | uk_date }}
+                        {% if blip.updated_at and blip.updated_at != blip.created_at %}
+                            Updated {{ blip.updated_at | uk_date }}
+                        {% else %}
+                            Created {{ blip.created_at | uk_date }}
+                        {% endif %}
                         {% if blip.last_surfaced %}
                             • Last surfaced {{ blip.last_surfaced | uk_date }} ({{ blip.surface_count }}×)
                         {% else %}
@@ -28,9 +32,12 @@
                         {% endif %}
                     </div>
                 </div>
-                <form method="POST" action="/blips/{{ blip.id }}/delete" style="margin-left: 1rem;">
-                    <button type="submit" class="btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">✕</button>
-                </form>
+                <div style="display: flex; gap: 0.5rem; margin-left: 1rem;">
+                    <a href="/blips/{{ blip.id }}/edit" class="btn-ghost" style="padding: 0.25rem 0.5rem; font-size: 0.75rem; text-decoration: none; display: inline-block;">Edit</a>
+                    <form method="POST" action="/blips/{{ blip.id }}/delete">
+                        <button type="submit" class="btn-ghost btn-danger" style="padding: 0.25rem 0.5rem; font-size: 0.75rem;">✕</button>
+                    </form>
+                </div>
             </div>
         {% endfor %}
     {% else %}

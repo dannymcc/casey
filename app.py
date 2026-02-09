@@ -70,6 +70,7 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             content TEXT NOT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             last_surfaced TIMESTAMP,
             surface_count INTEGER DEFAULT 0
         );
@@ -82,6 +83,15 @@ def init_db():
             UNIQUE(journal_date, blip_id)
         );
     ''')
+    
+    # Migration: Add updated_at column to blips if it doesn't exist
+    try:
+        db.execute('SELECT updated_at FROM blips LIMIT 1')
+    except:
+        db.execute('ALTER TABLE blips ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP')
+        db.execute('UPDATE blips SET updated_at = created_at WHERE updated_at IS NULL')
+        db.commit()
+    
     db.commit()
     db.close()
 
@@ -206,6 +216,28 @@ def add_blip():
         db.close()
     
     return redirect(url_for('blips_list'))
+
+@app.route('/blips/<int:blip_id>/edit', methods=['GET', 'POST'])
+def edit_blip(blip_id):
+    """Edit existing blip"""
+    db = get_db()
+    
+    if request.method == 'POST':
+        content = request.form.get('content', '').strip()
+        if content:
+            db.execute('UPDATE blips SET content = ?, updated_at = ? WHERE id = ?',
+                      (content, datetime.now().isoformat(), blip_id))
+            db.commit()
+        db.close()
+        return redirect(url_for('blips_list'))
+    
+    blip = db.execute('SELECT * FROM blips WHERE id = ?', (blip_id,)).fetchone()
+    db.close()
+    
+    if not blip:
+        return redirect(url_for('blips_list'))
+    
+    return render_template('edit_blip.html', blip=blip)
 
 @app.route('/blips/<int:blip_id>/delete', methods=['POST'])
 def delete_blip(blip_id):
