@@ -2,24 +2,66 @@
 
 {% block title %}Completed Tasks - Casey{% endblock %}
 
+{% block extra_styles %}
+.completed-item {
+    display: flex;
+    align-items: center;
+    padding: 0.625rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.completed-item:last-child { border-bottom: none; }
+
+.completed-check {
+    width: 18px;
+    height: 18px;
+    min-width: 18px;
+    border-radius: 50%;
+    background: var(--border);
+    margin-right: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.completed-check svg {
+    width: 10px;
+    height: 10px;
+    color: white;
+}
+
+.completed-title {
+    flex: 1;
+    font-size: 14px;
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+.completed-date {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    margin-left: 0.75rem;
+}
+{% endblock %}
+
 {% block content %}
-<div class="card" style="max-width: 720px;">
-    <h2>Completed Tasks</h2>
-    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 1.5rem;">
-        Last 50 completed
-    </p>
+<div style="max-width: 680px;">
+    <h1 class="page-title">Completed</h1>
+    <p class="page-desc">Last 50 completed tasks</p>
 
     {% if tasks %}
-        <ul class="task-list">
+        <div class="card">
             {% for task in tasks %}
-                <li class="task-item" style="opacity: 0.7;">
-                    <span style="flex: 1; font-size: 14px; text-decoration: line-through; color: var(--text-secondary);">{{ task.title }}</span>
-                    <span style="font-size: 11px; color: var(--text-muted); white-space: nowrap; margin-left: 0.75rem;">
-                        {{ task.completed_at | uk_date if task.completed_at else '' }}
-                    </span>
-                </li>
+                <div class="completed-item">
+                    <div class="completed-check">
+                        <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5l2.5 2.5L8 3"/></svg>
+                    </div>
+                    <span class="completed-title">{{ task.title }}</span>
+                    <span class="completed-date">{{ task.completed_at | uk_date if task.completed_at else '' }}</span>
+                </div>
             {% endfor %}
-        </ul>
+        </div>
     {% else %}
         <div class="empty-state">No completed tasks yet.</div>
     {% endif %}

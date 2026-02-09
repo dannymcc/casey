@@ -4,17 +4,16 @@
 
 {% block extra_styles %}
 .api-section {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
+    background: var(--bg);
+    border-radius: var(--radius-sm);
     padding: 1.25rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .api-section h4 {
-    font-family: var(--serif);
-    font-size: 0.9375rem;
-    font-weight: 500;
-    margin-bottom: 0.875rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
     color: var(--text);
 }
 
@@ -26,18 +25,19 @@
 
 .method {
     display: inline-block;
-    padding: 0.125rem 0.375rem;
-    border-radius: 3px;
+    padding: 0.125rem 0.4375rem;
+    border-radius: 4px;
     font-size: 10px;
     font-weight: 600;
-    font-family: var(--sans);
+    font-family: var(--font);
     color: white;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
 .method-get { background: var(--success); }
-.method-post { background: var(--accent); }
-.method-put { background: #D4923A; }
+.method-post { background: var(--text); }
+.method-put { background: var(--accent); }
 .method-delete { background: var(--danger); }
 
 .api-code {
@@ -63,43 +63,67 @@
 
 pre.code-block {
     background: var(--bg);
-    padding: 0.75rem;
-    border-radius: var(--radius);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm);
     overflow-x: auto;
     font-family: var(--mono);
     font-size: 12px;
     color: var(--text);
-    line-height: 1.6;
+    line-height: 1.7;
     border: 1px solid var(--border-light);
 }
+
+.api-callout {
+    background: var(--accent-subtle);
+    border-radius: var(--radius-sm);
+    padding: 0.875rem 1.125rem;
+    margin-bottom: 2rem;
+}
+
+.api-callout-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 0.25rem;
+}
+
+.api-callout-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.api-callout-text a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.api-callout-text a:hover { text-decoration: underline; }
 {% endblock %}
 
 {% block content %}
-<div style="max-width: 720px;">
+<div style="max-width: 700px;">
+    <h1 class="page-title">API</h1>
+    <p class="page-desc" style="margin-bottom: 1.5rem; line-height: 1.7;">
+        Access your data programmatically, build integrations, or automate workflows.
+    </p>
+
     <div class="card">
-        <h2 style="font-size: 1.125rem;">Casey API</h2>
-
-        <p style="color: var(--text-secondary); font-size: 14px; margin-bottom: 1.5rem; line-height: 1.7;">
-            Whilst Casey is designed to be simple out of the box, every app should have an API.
-            Access your data programmatically, build integrations, or automate workflows.
-        </p>
-
-        <div style="border-left: 2px solid var(--accent); padding: 0.75rem 1rem; background: var(--accent-light); border-radius: 0 var(--radius) var(--radius) 0; margin-bottom: 2rem;">
-            <div style="font-weight: 500; font-size: 13px; margin-bottom: 0.25rem;">API Key Required</div>
-            <div style="font-size: 13px; color: var(--text-secondary);">
-                All requests require <code style="font-family: var(--mono); font-size: 11px;">X-API-Key</code> header.
-                <a href="/settings/api" style="color: var(--accent); text-decoration: none; font-weight: 500;">View your key &rsaquo;</a>
+        <div class="api-callout">
+            <div class="api-callout-title">API Key Required</div>
+            <div class="api-callout-text">
+                All requests require <code style="font-family: var(--mono); font-size: 11px; background: var(--surface); padding: 0.125rem 0.375rem; border-radius: 3px;">X-API-Key</code> header.
+                <a href="/settings/api">View your key &rsaquo;</a>
             </div>
         </div>
 
-        <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-bottom: 0.75rem;">Base URL</h3>
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Base URL</h3>
         <pre class="code-block" style="margin-bottom: 2rem;">https://casey.dmcc.io/api</pre>
 
-        <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-bottom: 0.75rem;">Authentication</h3>
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Authentication</h3>
         <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 0.5rem;">Include your API key in every request:</p>
         <pre class="code-block" style="margin-bottom: 2rem;">curl -H "X-API-Key: YOUR_API_KEY" https://casey.dmcc.io/api/tasks</pre>
 
-        <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-bottom: 1rem;">Endpoints</h3>
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem;">Endpoints</h3>
 
         <div class="api-section">
             <h4>Journal Entries</h4>
@@ -191,13 +215,13 @@ pre.code-block {
             </div>
         </div>
 
-        <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-top: 2rem; margin-bottom: 0.75rem;">Response Format</h3>
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem;">Response Format</h3>
         <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 0.5rem;">
             All responses are JSON. Errors return appropriate status codes:
         </p>
         <pre class="code-block" style="margin-bottom: 2rem;">{"error": "Invalid or missing API key"}</pre>
 
-        <h3 style="font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-bottom: 0.75rem;">Example</h3>
+        <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Example</h3>
         <pre class="code-block">curl -X POST \
   -H "X-API-Key: YOUR_API_KEY" \
   -H "Content-Type: application/json" \

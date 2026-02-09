@@ -5,13 +5,13 @@
 {% block extra_styles %}
 .settings-row {
     padding: 1rem 1.25rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    margin-bottom: 0.5rem;
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.375rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    transition: border-color 0.15s, background 0.15s;
+    transition: background 0.15s;
+    background: var(--bg);
 }
 
 a.settings-row {
@@ -20,30 +20,53 @@ a.settings-row {
 }
 
 a.settings-row:hover {
-    border-color: var(--accent);
-    background: var(--accent-light);
+    background: var(--border-light);
+}
+
+.settings-label {
+    font-weight: 500;
+    font-size: 14px;
+    margin-bottom: 0.125rem;
+}
+
+.settings-desc {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.settings-value {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    font-weight: 500;
+}
+
+.settings-arrow {
+    color: var(--text-muted);
+    font-size: 16px;
 }
 {% endblock %}
 
 {% block content %}
-<div class="card" style="max-width: 640px;">
-    <h2>Settings</h2>
+<div style="max-width: 600px;">
+    <h1 class="page-title">Settings</h1>
+    <p class="page-desc">Manage your Casey configuration</p>
 
-    <div style="margin-top: 1.25rem;">
+    <div class="card">
         <div class="settings-row">
             <div>
-                <div style="font-weight: 500; font-size: 14px; margin-bottom: 0.125rem;">Version</div>
-                <div style="font-size: 12px; color: var(--text-secondary);">Current build</div>
+                <div class="settings-label">Version</div>
+                <div class="settings-desc">Current build</div>
             </div>
-            <code style="font-family: var(--mono); font-size: 13px; color: var(--accent); font-weight: 500;">v{{ version }}</code>
+            <span class="settings-value">v{{ version }}</span>
         </div>
 
         <a href="/settings/api" class="settings-row">
             <div>
-                <div style="font-weight: 500; font-size: 14px; margin-bottom: 0.125rem;">API Settings</div>
-                <div style="font-size: 12px; color: var(--text-secondary);">Manage API keys and access</div>
+                <div class="settings-label">API Settings</div>
+                <div class="settings-desc">Manage API keys and access</div>
             </div>
-            <span style="color: var(--text-muted); font-size: 14px;">&rsaquo;</span>
+            <span class="settings-arrow">&rsaquo;</span>
         </a>
     </div>
 </div>

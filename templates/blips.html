@@ -2,43 +2,68 @@
 
 {% block title %}Blips - Casey{% endblock %}
 
-{% block content %}
-<div class="card" style="max-width: 720px;">
-    <h2>All Blips</h2>
-    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 1.25rem;">
-        Ongoing topics, questions, or ideas you're tracking.
-    </p>
+{% block extra_styles %}
+.blip-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 0.75rem;
+}
 
-    <form method="POST" action="/blips/add" style="margin-bottom: 1.75rem;">
-        <textarea name="content" rows="3" placeholder="A thought, question, or idea to track..." required style="min-height: 72px;"></textarea>
-        <div style="margin-top: 0.5rem;">
-            <button type="submit">Add Blip</button>
-        </div>
-    </form>
+.blip-actions {
+    display: flex;
+    gap: 0.125rem;
+    flex-shrink: 0;
+    opacity: 0;
+    transition: opacity 0.15s;
+}
+
+.blip:hover .blip-actions { opacity: 1; }
+
+@media (max-width: 768px) {
+    .blip-actions { opacity: 1; }
+}
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 680px;">
+    <h1 class="page-title">Blips</h1>
+    <p class="page-desc">Ongoing topics, questions, or ideas you're tracking.</p>
+
+    <div class="card" style="margin-bottom: 1.5rem;">
+        <form method="POST" action="/blips/add">
+            <textarea name="content" rows="3" placeholder="A thought, question, or idea to track..." required style="min-height: 72px;"></textarea>
+            <div style="margin-top: 0.625rem;">
+                <button type="submit">Add Blip</button>
+            </div>
+        </form>
+    </div>
 
     {% if blips %}
         {% for blip in blips %}
-            <div class="blip" style="display: flex; justify-content: space-between; align-items: start; gap: 0.75rem;">
-                <div style="flex: 1; min-width: 0;">
-                    <div style="white-space: pre-wrap;">{{ blip.content }}</div>
-                    <div class="blip-meta">
-                        {% if blip.updated_at and blip.updated_at != blip.created_at %}
-                            Updated {{ blip.updated_at | uk_date }}
-                        {% else %}
-                            Created {{ blip.created_at | uk_date }}
-                        {% endif %}
-                        {% if blip.last_surfaced %}
-                            &middot; Surfaced {{ blip.surface_count }}&times;
-                        {% else %}
-                            &middot; Never surfaced
-                        {% endif %}
+            <div class="blip" style="margin-bottom: 0.375rem;">
+                <div class="blip-row">
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="white-space: pre-wrap;">{{ blip.content }}</div>
+                        <div class="blip-meta">
+                            {% if blip.updated_at and blip.updated_at != blip.created_at %}
+                                Updated {{ blip.updated_at | uk_date }}
+                            {% else %}
+                                Created {{ blip.created_at | uk_date }}
+                            {% endif %}
+                            {% if blip.last_surfaced %}
+                                &middot; Surfaced {{ blip.surface_count }}&times;
+                            {% else %}
+                                &middot; Never surfaced
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-                <div style="display: flex; gap: 0.125rem; flex-shrink: 0;">
-                    <a href="/blips/{{ blip.id }}/edit" class="btn-ghost" style="text-decoration: none; font-size: 12px;">Edit</a>
-                    <form method="POST" action="/blips/{{ blip.id }}/delete" style="margin: 0;">
-                        <button type="submit" class="btn-ghost btn-danger" style="font-size: 12px;">&times;</button>
-                    </form>
+                    <div class="blip-actions">
+                        <a href="/blips/{{ blip.id }}/edit" class="btn-ghost" style="text-decoration: none; font-size: 12px;">Edit</a>
+                        <form method="POST" action="/blips/{{ blip.id }}/delete" style="margin: 0;">
+                            <button type="submit" class="btn-ghost btn-danger" style="font-size: 14px; min-height: auto; line-height: 1;">&times;</button>
+                        </form>
+                    </div>
                 </div>
             </div>
         {% endfor %}
