@@ -343,7 +343,7 @@
 {% else %}
 <div class="greeting">
     {% set hour = now.hour if now is defined else 12 %}
-    {% if hour < 12 %}Good morning{% elif hour < 17 %}Good afternoon{% else %}Good evening{% endif %}{% if current_user %}, {{ current_user }}{% endif %}{% if stats.streak > 1 %}<span style="font-weight: 400; font-size: 0.875rem; color: var(--text-muted); margin-left: 0.75rem;">{{ stats.streak }} day streak</span>{% endif %}
+    {% if hour < 12 %}Good morning{% elif hour < 17 %}Good afternoon{% else %}Good evening{% endif %}{% if current_user %}, {{ current_user | capitalize }}{% endif %}{% if stats.streak > 1 %}<span style="font-weight: 400; font-size: 0.875rem; color: var(--text-muted); margin-left: 0.75rem;">{{ stats.streak }} day streak</span>{% endif %}
 </div>
 {% endif %}
 
