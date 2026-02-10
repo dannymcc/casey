@@ -803,7 +803,7 @@ def index():
                            today=today,
                            now=datetime.now(),
                            is_new_user=is_new_user,
-                           templates=JOURNAL_TEMPLATES,
+                           templates=get_user_templates(get_current_user_id()),
                            stats={
                                'entries': total_entries,
                                'active_tasks': len(tasks),
@@ -1840,11 +1840,68 @@ JOURNAL_TEMPLATES = [
 ]
 
 
+def get_user_templates(user_id):
+    """Get user's custom templates, falling back to defaults."""
+    custom = get_preference(user_id, 'journal_templates')
+    if custom:
+        try:
+            return json.loads(custom)
+        except (json.JSONDecodeError, TypeError):
+            pass
+    return JOURNAL_TEMPLATES
+
+
 @app.route('/journal/templates')
 @login_required
 def journal_templates():
     """Get available journal templates as JSON."""
-    return jsonify({'templates': JOURNAL_TEMPLATES})
+    user_id = get_current_user_id()
+    return jsonify({'templates': get_user_templates(user_id)})
+
+
+@app.route('/settings/templates')
+@login_required
+def settings_templates():
+    """Journal templates management page."""
+    user_id = get_current_user_id()
+    templates = get_user_templates(user_id)
+    return render_template('settings_templates.html', templates=templates)
+
+
+@app.route('/settings/templates/save', methods=['POST'])
+@login_required
+def save_templates():
+    """Save custom journal templates."""
+    user_id = get_current_user_id()
+    templates = []
+    i = 0
+    while True:
+        name = request.form.get(f'name_{i}')
+        if name is None:
+            break
+        content = request.form.get(f'content_{i}', '')
+        if name.strip():
+            templates.append({'name': name.strip(), 'content': content})
+        i += 1
+    if not templates:
+        flash('You need at least one template.', 'error')
+        return redirect(url_for('settings_templates'))
+    set_preference(user_id, 'journal_templates', json.dumps(templates))
+    flash('Templates saved.', 'success')
+    return redirect(url_for('settings_templates'))
+
+
+@app.route('/settings/templates/reset', methods=['POST'])
+@login_required
+def reset_templates():
+    """Reset journal templates to defaults."""
+    user_id = get_current_user_id()
+    db = get_db()
+    db.execute('DELETE FROM user_preferences WHERE user_id = ? AND key = ?',
+               (user_id, 'journal_templates'))
+    db.commit()
+    flash('Templates reset to defaults.', 'success')
+    return redirect(url_for('settings_templates'))
 
 
 # --- Admin Panel ---

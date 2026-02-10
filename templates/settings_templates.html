@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Journal Templates - Casey{% endblock %}
+
+{% block extra_styles %}
+.template-item {
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-light);
+}
+
+.template-item:first-child {
+    border-top: none;
+    padding-top: 0;
+}
+
+.template-item .form-group {
+    margin-bottom: 0.75rem;
+}
+
+.template-item .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.template-item label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    display: block;
+    margin-bottom: 0.25rem;
+}
+
+.template-item input[type="text"] {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.template-item textarea {
+    font-size: 13px;
+    font-family: var(--mono);
+    min-height: 80px;
+    resize: vertical;
+}
+
+.template-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.template-number {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.btn-remove {
+    font-size: 12px;
+    color: var(--text-muted);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-xs);
+    cursor: pointer;
+    min-height: auto;
+    font-family: var(--font);
+}
+
+.btn-remove:hover {
+    color: #e55;
+    border-color: #e55;
+}
+
+.template-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+}
+{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px;">
+    <a href="/settings" class="back-link">
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12L6 8l4-4"/></svg>
+        Back to Settings
+    </a>
+
+    <div class="card">
+        <h2>Journal Templates</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 14px;">
+            Customize the writing prompts shown on your Today page.
+        </p>
+
+        <form id="templates-form" method="POST" action="/settings/templates/save">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div id="templates-list">
+                {% for t in templates %}
+                <div class="template-item" data-index="{{ loop.index0 }}">
+                    <div class="template-header">
+                        <span class="template-number">Template {{ loop.index }}</span>
+                        <button type="button" class="btn-remove" onclick="removeTemplate(this)">&times; Remove</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Name</label>
+                        <input type="text" name="name_{{ loop.index0 }}" value="{{ t.name }}" required placeholder="e.g. Morning Pages">
+                    </div>
+                    <div class="form-group">
+                        <label>Content</label>
+                        <textarea name="content_{{ loop.index0 }}" placeholder="Template content (supports markdown)">{{ t.content }}</textarea>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="template-actions">
+                <button type="submit" style="font-size: 13px; padding: 0.5rem 1rem; min-height: auto;">Save Templates</button>
+                <button type="button" onclick="addTemplate()" style="font-size: 13px; padding: 0.5rem 1rem; min-height: auto; background: var(--surface); color: var(--text-secondary); border: 1px solid var(--border);">+ Add Template</button>
+            </div>
+        </form>
+
+        <div style="padding-top: 1.5rem; margin-top: 1.5rem; border-top: 1px solid var(--border-light);">
+            <form method="POST" action="/settings/templates/reset" onsubmit="return confirm('Reset all templates to defaults? Your custom templates will be lost.')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" style="font-size: 12px; padding: 0.375rem 0.75rem; min-height: auto; background: var(--surface); color: var(--text-muted); border: 1px solid var(--border);">Reset to Defaults</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var templateCount = {{ templates|length }};
+
+function addTemplate() {
+    var list = document.getElementById('templates-list');
+    var idx = templateCount;
+    templateCount++;
+    var div = document.createElement('div');
+    div.className = 'template-item';
+    div.setAttribute('data-index', idx);
+    div.innerHTML = '<div class="template-header">' +
+        '<span class="template-number">Template ' + (idx + 1) + '</span>' +
+        '<button type="button" class="btn-remove" onclick="removeTemplate(this)">&times; Remove</button>' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<label>Name</label>' +
+        '<input type="text" name="name_' + idx + '" value="" required placeholder="e.g. Morning Pages">' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<label>Content</label>' +
+        '<textarea name="content_' + idx + '" placeholder="Template content (supports markdown)"></textarea>' +
+        '</div>';
+    list.appendChild(div);
+    renumberTemplates();
+}
+
+function removeTemplate(btn) {
+    var item = btn.closest('.template-item');
+    var list = document.getElementById('templates-list');
+    if (list.children.length <= 1) {
+        alert('You need at least one template.');
+        return;
+    }
+    item.remove();
+    renumberTemplates();
+}
+
+function renumberTemplates() {
+    var items = document.querySelectorAll('#templates-list .template-item');
+    templateCount = items.length;
+    items.forEach(function(item, i) {
+        item.setAttribute('data-index', i);
+        item.querySelector('.template-number').textContent = 'Template ' + (i + 1);
+        item.querySelector('input[type="text"]').name = 'name_' + i;
+        item.querySelector('textarea').name = 'content_' + i;
+    });
+}
+</script>
+{% endblock %}
