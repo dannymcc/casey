@@ -415,13 +415,29 @@ def get_journal_tags(db, journal_entry_id):
 
 # --- Template filters ---
 
+def _get_date_format():
+    """Get the current user's date format preference."""
+    try:
+        user_id = get_current_user_id()
+        if user_id:
+            return get_preference(user_id, 'date_format', 'dd/mm/yyyy')
+    except Exception:
+        pass
+    return 'dd/mm/yyyy'
+
+
 @app.template_filter('uk_date')
 def uk_date_filter(date_string):
-    """Format date to British DD/MM/YYYY format."""
+    """Format date according to user's date format preference."""
     if not date_string:
         return ''
     try:
         dt = datetime.fromisoformat(date_string.split('T')[0])
+        fmt = _get_date_format()
+        if fmt == 'mm/dd/yyyy':
+            return dt.strftime('%m/%d/%Y')
+        elif fmt == 'yyyy-mm-dd':
+            return dt.strftime('%Y-%m-%d')
         return dt.strftime('%d/%m/%Y')
     except (ValueError, AttributeError):
         return date_string
@@ -429,11 +445,16 @@ def uk_date_filter(date_string):
 
 @app.template_filter('uk_date_long')
 def uk_date_long_filter(date_string):
-    """Format date to British long format (e.g., Monday, 9 February 2026)."""
+    """Format date in long form according to user's date format preference."""
     if not date_string:
         return ''
     try:
         dt = datetime.fromisoformat(date_string.split('T')[0])
+        fmt = _get_date_format()
+        if fmt == 'mm/dd/yyyy':
+            return dt.strftime('%A, %B %-d, %Y')
+        elif fmt == 'yyyy-mm-dd':
+            return dt.strftime('%A, %Y-%m-%d')
         return dt.strftime('%A, %-d %B %Y')
     except (ValueError, AttributeError):
         return date_string
@@ -1306,7 +1327,8 @@ def settings():
     """Settings page."""
     user_id = get_current_user_id()
     blip_count = int(get_preference(user_id, 'daily_blip_count', '3'))
-    return render_template('settings.html', version=app.config['VERSION'], blip_count=blip_count)
+    date_format = get_preference(user_id, 'date_format', 'dd/mm/yyyy')
+    return render_template('settings.html', version=app.config['VERSION'], blip_count=blip_count, date_format=date_format)
 
 
 @app.route('/settings/preferences', methods=['POST'])
@@ -1317,6 +1339,9 @@ def save_preferences():
     blip_count = request.form.get('daily_blip_count', 3, type=int)
     blip_count = max(1, min(blip_count, 10))
     set_preference(user_id, 'daily_blip_count', blip_count)
+    date_format = request.form.get('date_format', 'dd/mm/yyyy')
+    if date_format in ('dd/mm/yyyy', 'mm/dd/yyyy', 'yyyy-mm-dd'):
+        set_preference(user_id, 'date_format', date_format)
     flash('Preferences saved.', 'success')
     return redirect(url_for('settings'))
 

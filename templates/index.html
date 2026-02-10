@@ -357,6 +357,7 @@
     </div>
     <form id="journal-form" method="POST" action="/journal/save">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        {% if not journal or not journal.content %}
         <div class="template-select">
             {% for tmpl in templates %}
             {% if tmpl.content %}
@@ -364,6 +365,7 @@
             {% endif %}
             {% endfor %}
         </div>
+        {% endif %}
         <textarea id="journal-content" name="content" placeholder="What's on your mind today?">{{ journal.content if journal else '' }}</textarea>
         <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
