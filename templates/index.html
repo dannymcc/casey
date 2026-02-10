@@ -486,7 +486,8 @@
             body: form
         }).then(function(r) {
             if (r.ok) { lastSaved = textarea.value; showIndicator('Saved', 'saved'); }
-        }).catch(function() {});
+            else { showIndicator('Save failed', 'error'); }
+        }).catch(function() { showIndicator('Save failed', 'error'); });
     }
 
     textarea.addEventListener('input', function() {

@@ -860,6 +860,7 @@ def save_journal():
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({'saved': True})
 
+    flash('Journal saved.', 'success')
     return redirect(url_for('index'))
 
 
