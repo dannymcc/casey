@@ -23,7 +23,7 @@
 .search-section h3 {
     font-size: 13px;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--ink-secondary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
     margin-bottom: 0.75rem;
@@ -33,12 +33,12 @@
     padding: 0.75rem 1rem;
     border-radius: var(--radius-sm);
     margin-bottom: 0.375rem;
-    background: var(--bg);
+    background: var(--surface-hover);
     transition: background 0.15s;
 }
 
 .search-result:hover {
-    background: var(--border-light);
+    background: var(--surface-inset);
 }
 
 .search-result-title {
@@ -48,17 +48,17 @@
 }
 
 .search-result-title a {
-    color: var(--text);
+    color: var(--ink);
     text-decoration: none;
 }
 
 .search-result-title a:hover {
-    color: var(--accent);
+    color: var(--clay);
 }
 
 .search-result-excerpt {
     font-size: 13px;
-    color: var(--text-secondary);
+    color: var(--ink-secondary);
     line-height: 1.6;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -68,7 +68,7 @@
 
 .search-result-meta {
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--ink-muted);
     margin-top: 0.25rem;
 }
 {% endblock %}
@@ -76,7 +76,7 @@
 {% block content %}
 <div style="max-width: 680px;">
     <h1 class="page-title">Search</h1>
-    <p class="page-desc">Find entries across your journal, tasks, and blips <span style="font-size: 11px; color: var(--text-muted);">(Tip: press <kbd style="font-family: var(--mono); font-size: 11px; background: var(--bg); padding: 0.125rem 0.25rem; border-radius: 3px; border: 1px solid var(--border);">/</kbd> or <kbd style="font-family: var(--mono); font-size: 11px; background: var(--bg); padding: 0.125rem 0.25rem; border-radius: 3px; border: 1px solid var(--border);">&#8984;K</kbd> to search from anywhere)</span></p>
+    <p class="page-desc">Find entries across your journal, tasks, and blips <span style="font-size: 11px; color: var(--ink-muted);">(Tip: press <kbd style="font-family: var(--mono); font-size: 11px; background: var(--surface-inset); padding: 0.125rem 0.25rem; border-radius: 3px; border: 1px solid var(--border);">/</kbd> or <kbd style="font-family: var(--mono); font-size: 11px; background: var(--surface-inset); padding: 0.125rem 0.25rem; border-radius: 3px; border: 1px solid var(--border);">&#8984;K</kbd> to search from anywhere)</span></p>
 
     <form class="search-form" method="GET" action="/search">
         <div class="search-input-row">
@@ -86,7 +86,7 @@
     </form>
 
     {% if q %}
-        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 1.5rem;">
+        <p style="font-size: 13px; color: var(--ink-muted); margin-bottom: 1.5rem;">
             {{ total }} result{{ 's' if total != 1 }} for &ldquo;{{ q }}&rdquo;
         </p>
 
@@ -109,7 +109,7 @@
             <div class="search-result">
                 <div class="search-result-title">
                     {% if task.completed %}
-                        <span style="text-decoration: line-through; color: var(--text-muted);">{{ task.title }}</span>
+                        <span style="text-decoration: line-through; color: var(--ink-muted);">{{ task.title }}</span>
                     {% else %}
                         {{ task.title }}
                     {% endif %}

@@ -8,7 +8,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 0.75rem 1rem;
-    background: var(--bg);
+    background: var(--surface-hover);
     border-radius: var(--radius-sm);
     margin-bottom: 0.375rem;
 }
@@ -26,7 +26,7 @@
 
 .token-meta {
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--ink-muted);
     display: flex;
     gap: 0.75rem;
     flex-wrap: wrap;
@@ -35,7 +35,7 @@
 .token-preview {
     font-family: var(--mono);
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--ink-muted);
     margin-right: 0.75rem;
     white-space: nowrap;
 }
@@ -50,7 +50,7 @@
 .new-token-box code {
     font-family: var(--mono);
     font-size: 12px;
-    color: var(--text);
+    color: var(--ink);
     word-break: break-all;
     line-height: 1.6;
     background: var(--surface);
@@ -63,7 +63,7 @@
 
 .security-list {
     list-style: none;
-    color: var(--text-secondary);
+    color: var(--ink-secondary);
     font-size: 13px;
     line-height: 2;
 }
@@ -79,7 +79,7 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: var(--border);
+    background: var(--border-emphasis);
     flex-shrink: 0;
 }
 {% endblock %}
@@ -93,14 +93,14 @@
 
     <div class="card">
         <h2>API Settings</h2>
-        <p style="color: var(--text-secondary); margin-bottom: 1.5rem; font-size: 14px;">
+        <p style="color: var(--ink-secondary); margin-bottom: 1.5rem; font-size: 14px;">
             Create and manage personal access tokens for the Casey API.
         </p>
 
         {% if new_token %}
         <div class="new-token-box">
             <div style="font-weight: 500; font-size: 13px; color: var(--success); margin-bottom: 0.25rem;">Token created</div>
-            <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 0.5rem;">Copy it now — you won't be able to see it again.</div>
+            <div style="font-size: 12px; color: var(--ink-secondary); margin-bottom: 0.5rem;">Copy it now — you won't be able to see it again.</div>
             <code>{{ new_token }}</code>
         </div>
         {% endif %}
@@ -137,7 +137,7 @@
         {% endif %}
 
         <div style="margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
-            <a href="/api" style="color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500;">
+            <a href="/api" style="color: var(--clay); text-decoration: none; font-size: 13px; font-weight: 500;">
                 View API Documentation &rsaquo;
             </a>
         </div>

@@ -4,7 +4,7 @@
 
 {% block extra_styles %}
 .api-section {
-    background: var(--bg);
+    background: var(--surface-hover);
     border-radius: var(--radius-sm);
     padding: 1.25rem;
     margin-bottom: 0.75rem;
@@ -14,7 +14,7 @@
     font-size: 0.875rem;
     font-weight: 600;
     margin-bottom: 1rem;
-    color: var(--text);
+    color: var(--ink);
 }
 
 .endpoint {
@@ -36,19 +36,19 @@
 }
 
 .method-get { background: var(--success); }
-.method-post { background: var(--text); }
-.method-put { background: var(--accent); }
+.method-post { background: var(--ink); }
+.method-put { background: var(--clay); }
 .method-delete { background: var(--danger); }
 
 .api-code {
     font-family: var(--mono);
     font-size: 12px;
-    color: var(--text);
+    color: var(--ink);
     margin-left: 0.5rem;
 }
 
 .api-desc {
-    color: var(--text-secondary);
+    color: var(--ink-secondary);
     font-size: 13px;
     margin-top: 0.25rem;
     margin-left: 3rem;
@@ -56,25 +56,25 @@
 
 .api-param {
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--ink-muted);
     margin-top: 0.125rem;
     margin-left: 3rem;
 }
 
 pre.code-block {
-    background: var(--bg);
+    background: var(--surface-inset);
     padding: 0.75rem 1rem;
     border-radius: var(--radius-sm);
     overflow-x: auto;
     font-family: var(--mono);
     font-size: 12px;
-    color: var(--text);
+    color: var(--ink);
     line-height: 1.7;
     border: 1px solid var(--border-light);
 }
 
 .api-callout {
-    background: var(--accent-subtle);
+    background: var(--clay-subtle);
     border-radius: var(--radius-sm);
     padding: 0.875rem 1.125rem;
     margin-bottom: 2rem;
@@ -88,11 +88,11 @@ pre.code-block {
 
 .api-callout-text {
     font-size: 13px;
-    color: var(--text-secondary);
+    color: var(--ink-secondary);
 }
 
 .api-callout-text a {
-    color: var(--accent);
+    color: var(--clay);
     text-decoration: none;
     font-weight: 500;
 }
@@ -120,7 +120,7 @@ pre.code-block {
         <pre class="code-block" style="margin-bottom: 2rem;">https://casey.dmcc.io/api</pre>
 
         <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Authentication</h3>
-        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 0.5rem;">Include your API key in every request:</p>
+        <p style="color: var(--ink-secondary); font-size: 13px; margin-bottom: 0.5rem;">Include your API key in every request:</p>
         <pre class="code-block" style="margin-bottom: 2rem;">curl -H "X-API-Key: YOUR_API_KEY" https://casey.dmcc.io/api/tasks</pre>
 
         <h3 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 1rem;">Endpoints</h3>
@@ -216,7 +216,7 @@ pre.code-block {
         </div>
 
         <h3 style="font-size: 0.875rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem;">Response Format</h3>
-        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 0.5rem;">
+        <p style="color: var(--ink-secondary); font-size: 13px; margin-bottom: 0.5rem;">
             All responses are JSON. Errors return appropriate status codes:
         </p>
         <pre class="code-block" style="margin-bottom: 2rem;">{"error": "Invalid or missing API key"}</pre>

@@ -6,7 +6,7 @@
 .date-label {
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-muted);
+    color: var(--ink-muted);
     margin-bottom: 0.25rem;
     letter-spacing: 0.01em;
 }
@@ -15,8 +15,15 @@
     font-size: 1.375rem;
     font-weight: 600;
     letter-spacing: -0.025em;
-    color: var(--text);
+    color: var(--ink);
     margin-bottom: 1.5rem;
+}
+
+.greeting .streak {
+    font-weight: 400;
+    font-size: 0.875rem;
+    color: var(--ink-muted);
+    margin-left: 0.75rem;
 }
 
 .journal-header {
@@ -34,7 +41,7 @@
 
 .word-count {
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--ink-muted);
 }
 
 .journal-card {
@@ -65,9 +72,9 @@
     transition: all 0.15s;
 }
 
-.mood-option:hover { border-color: var(--accent); }
+.mood-option:hover { border-color: var(--clay); }
 .mood-option input { display: none; }
-.mood-option.selected { border-color: var(--accent); background: var(--accent-subtle); }
+.mood-option.selected { border-color: var(--clay); background: var(--clay-subtle); }
 
 .template-select {
     display: flex;
@@ -81,7 +88,7 @@
     padding: 0.25rem 0.5rem;
     min-height: auto;
     background: var(--surface);
-    color: var(--text-muted);
+    color: var(--ink-muted);
     border: 1px solid var(--border);
     cursor: pointer;
     border-radius: var(--radius-xs);
@@ -91,12 +98,12 @@
 }
 
 .template-btn:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-    background: var(--accent-subtle);
+    border-color: var(--clay);
+    color: var(--clay);
+    background: var(--clay-subtle);
 }
 
-/* Secondary sections */
+/* Secondary sections — proper hierarchy, no opacity trick */
 .secondary-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -104,22 +111,12 @@
     align-items: start;
 }
 
-.section-quiet {
-    padding-top: 0.5rem;
-    opacity: 0.45;
-    transition: opacity 0.3s ease;
-}
-
-.section-quiet:hover, .section-quiet:focus-within {
-    opacity: 1;
-}
-
-.section-quiet h3 {
+.section-label {
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
-    color: var(--text-muted);
+    color: var(--ink-muted);
     margin-bottom: 0.75rem;
 }
 
@@ -133,7 +130,6 @@
     flex: 1;
     font-size: 13px;
     padding: 0.375rem 0.625rem;
-    border-color: var(--border-light);
 }
 
 .task-add-row button {
@@ -141,11 +137,12 @@
     font-size: 12px;
     padding: 0.375rem 0.625rem;
     min-height: auto;
-    background: var(--border-light);
-    color: var(--text-secondary);
+    background: var(--surface-inset);
+    color: var(--ink-secondary);
+    border: 1px solid var(--border);
 }
 
-.task-add-row button:hover { background: var(--border); color: var(--text); }
+.task-add-row button:hover { background: var(--surface-hover); color: var(--ink); opacity: 1; border-color: var(--border-emphasis); }
 
 .quiet-task-list {
     list-style: none;
@@ -157,7 +154,7 @@
     gap: 0.5rem;
     padding: 0.3125rem 0;
     font-size: 13px;
-    color: var(--text-secondary);
+    color: var(--ink-secondary);
     border-bottom: 1px solid var(--border-light);
 }
 
@@ -165,14 +162,14 @@
 
 .quiet-task-list li.completed span {
     text-decoration: line-through;
-    color: var(--text-muted);
+    color: var(--ink-muted);
 }
 
 .quiet-task-list input[type="checkbox"] {
     width: 15px;
     height: 15px;
     min-width: 15px;
-    border: 1.5px solid var(--border);
+    border: 1.5px solid var(--border-emphasis);
     border-radius: 3px;
     appearance: none;
     -webkit-appearance: none;
@@ -183,8 +180,8 @@
 }
 
 .quiet-task-list input[type="checkbox"]:checked {
-    background: var(--text-muted);
-    border-color: var(--text-muted);
+    background: var(--ink-muted);
+    border-color: var(--ink-muted);
 }
 
 .quiet-task-list input[type="checkbox"]:checked::after {
@@ -201,22 +198,21 @@
 
 .quiet-task-list .due-hint {
     font-size: 11px;
-    color: var(--text-muted);
+    color: var(--ink-muted);
     margin-left: auto;
     white-space: nowrap;
     flex-shrink: 0;
 }
 
 .quiet-task-list .due-hint.overdue { color: var(--danger); }
-.quiet-task-list .due-hint.due-today { color: #E65100; }
-[data-theme="dark"] .quiet-task-list .due-hint.due-today { color: #FFB74D; }
+.quiet-task-list .due-hint.due-today { color: var(--warning); }
 
 .quiet-task-list .task-link {
     color: inherit;
     text-decoration: none;
 }
 
-.quiet-task-list .task-link:hover { color: var(--text); }
+.quiet-task-list .task-link:hover { color: var(--ink); }
 
 .tasks-footer {
     margin-top: 0.5rem;
@@ -224,37 +220,55 @@
 }
 
 .tasks-footer a {
-    color: var(--text-muted);
+    color: var(--ink-muted);
     text-decoration: none;
     font-weight: 500;
 }
 
-.tasks-footer a:hover { color: var(--text-secondary); }
+.tasks-footer a:hover { color: var(--ink-secondary); }
 
-.quiet-blip {
-    font-size: 13px;
-    line-height: 1.6;
-    color: var(--text-secondary);
-    padding: 0.5rem 0;
-    border-bottom: 1px solid var(--border-light);
+/* Blips — given more presence as the signature feature */
+.blip-surface {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+    margin-bottom: 0.5rem;
 }
 
-.quiet-blip:last-child { border-bottom: none; }
+.blip-surface:last-child { margin-bottom: 0; }
 
-.quiet-blip-meta {
+.blip-surface .blip-text {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--ink);
+}
+
+.blip-surface .blip-surfaced {
     font-size: 11px;
-    color: var(--text-muted);
-    margin-top: 0.125rem;
+    color: var(--ink-faint);
+    margin-top: 0.375rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.blip-surface .blip-surfaced .blip-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--clay);
+    display: inline-block;
 }
 
 .quiet-empty {
     font-size: 12px;
-    color: var(--text-muted);
+    color: var(--ink-muted);
     padding: 0.5rem 0;
 }
 
 .quiet-empty a {
-    color: var(--accent);
+    color: var(--clay);
     text-decoration: none;
 }
 
@@ -262,8 +276,8 @@
     font-size: 10px;
     padding: 0.0625rem 0.3125rem;
     border-radius: 3px;
-    background: var(--border-light);
-    color: var(--text-muted);
+    background: var(--surface-inset);
+    color: var(--ink-muted);
     white-space: nowrap;
     margin-left: 0.125rem;
 }
@@ -283,7 +297,7 @@
 }
 
 .welcome p {
-    color: var(--text-secondary);
+    color: var(--ink-secondary);
     font-size: 14px;
     line-height: 1.7;
     max-width: 480px;
@@ -296,7 +310,7 @@
     right: 0.75rem;
     background: none;
     border: none;
-    color: var(--text-muted);
+    color: var(--ink-muted);
     cursor: pointer;
     padding: 0.25rem;
     min-height: auto;
@@ -310,10 +324,10 @@
     justify-content: center;
 }
 
-.welcome-dismiss:hover { color: var(--text-secondary); background: var(--border-light); }
+.welcome-dismiss:hover { color: var(--ink-secondary); background: var(--surface-hover); }
 
 .welcome-link {
-    color: var(--accent);
+    color: var(--clay);
     text-decoration: none;
     font-weight: 500;
     font-size: 13px;
@@ -343,7 +357,7 @@
 {% else %}
 <div class="greeting">
     {% set hour = now.hour if now is defined else 12 %}
-    {% if hour < 12 %}Good morning{% elif hour < 17 %}Good afternoon{% else %}Good evening{% endif %}{% if current_user %}, {{ current_user | capitalize }}{% endif %}{% if stats.streak > 1 %}<span style="font-weight: 400; font-size: 0.875rem; color: var(--text-muted); margin-left: 0.75rem;">{{ stats.streak }} day streak</span>{% endif %}
+    {% if hour < 12 %}Good morning{% elif hour < 17 %}Good afternoon{% else %}Good evening{% endif %}{% if current_user %}, {{ current_user | capitalize }}{% endif %}{% if stats.streak > 1 %}<span class="streak">{{ stats.streak }} day streak</span>{% endif %}
 </div>
 {% endif %}
 
@@ -369,7 +383,7 @@
         <textarea id="journal-content" name="content" placeholder="What's on your mind today?">{{ journal.content if journal else '' }}</textarea>
         <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap;">
             <div style="display: flex; align-items: center; gap: 0.5rem;">
-                <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Mood</span>
+                <span style="font-size: 12px; color: var(--ink-muted); font-weight: 500;">Mood</span>
                 <div class="mood-selector">
                     {% for val, label in [(1, '😔'), (2, '😐'), (3, '🙂'), (4, '😊'), (5, '🤩')] %}
                     <label class="mood-option {{ 'selected' if journal and journal.mood == val }}" title="{{ ['Rough','Meh','Okay','Good','Great'][val-1] }}" onclick="this.parentElement.querySelectorAll('.mood-option').forEach(e=>e.classList.remove('selected'));this.classList.add('selected')">
@@ -390,8 +404,8 @@
 </div>
 
 <div class="secondary-grid">
-    <div class="section-quiet">
-        <h3>Tasks{% if tasks %} <span style="font-weight: 400; text-transform: none; letter-spacing: 0;">· {{ tasks | length }}</span>{% endif %}</h3>
+    <div>
+        <h3 class="section-label">Tasks{% if tasks %} <span style="font-weight: 400; text-transform: none; letter-spacing: 0;">&middot; {{ tasks | length }}</span>{% endif %}</h3>
 
         <form method="POST" action="/tasks/add">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -434,14 +448,17 @@
         {% endif %}
     </div>
 
-    <div class="section-quiet">
-        <h3>Blips</h3>
+    <div>
+        <h3 class="section-label">Blips</h3>
 
         {% if blips %}
             {% for blip in blips %}
-                <div class="quiet-blip">
-                    {{ blip.content }}
-                    <div class="quiet-blip-meta">surfaced {{ blip.surface_count }}&times;</div>
+                <div class="blip-surface">
+                    <div class="blip-text">{{ blip.content }}</div>
+                    <div class="blip-surfaced">
+                        <span class="blip-dot"></span>
+                        surfaced {{ blip.surface_count }}&times;
+                    </div>
                 </div>
             {% endfor %}
         {% else %}

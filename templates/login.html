@@ -12,25 +12,27 @@
 
         :root {
             --font: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            --bg: #F7F7F5;
-            --surface: #FFFFFF;
-            --text: #1A1A1A;
-            --text-secondary: #6B6B6B;
-            --text-muted: #9B9B9B;
-            --accent: #D4754E;
-            --accent-hover: #C0653F;
-            --border: #EBEBEB;
-            --danger: #D94F4F;
-            --danger-bg: #FEF2F2;
-            --radius: 10px;
-            --radius-sm: 7px;
-            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --parchment: #F0EDE6;
+            --surface: #FAF9F6;
+            --surface-inset: #EAE7E0;
+            --ink: #2C2825;
+            --ink-secondary: #6D665E;
+            --ink-muted: #9C958B;
+            --ink-faint: #B8B2A8;
+            --clay: #C4684A;
+            --clay-hover: #B35C40;
+            --border: rgba(44, 40, 37, 0.10);
+            --border-emphasis: rgba(44, 40, 37, 0.16);
+            --danger: #C25550;
+            --danger-bg: #F8EDEC;
+            --radius: 8px;
+            --radius-sm: 6px;
         }
 
         body {
             font-family: var(--font);
-            background: var(--bg);
-            color: var(--text);
+            background: var(--parchment);
+            color: var(--ink);
             line-height: 1.6;
             font-size: 14px;
             -webkit-font-smoothing: antialiased;
@@ -44,11 +46,11 @@
         .auth-wrap {
             width: 100%;
             max-width: 360px;
-            animation: enter 0.3s ease-out;
+            animation: enter 0.25s ease-out;
         }
 
         @keyframes enter {
-            from { opacity: 0; transform: translateY(8px); }
+            from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -60,12 +62,12 @@
         .auth-header h1 {
             font-size: 1.25rem;
             font-weight: 600;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.025em;
             margin-bottom: 0.25rem;
         }
 
         .auth-header p {
-            color: var(--text-muted);
+            color: var(--ink-muted);
             font-size: 14px;
         }
 
@@ -73,14 +75,14 @@
             background: var(--surface);
             border-radius: var(--radius);
             padding: 2rem;
-            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
         }
 
         .form-group { margin-bottom: 1.25rem; }
         .form-group label {
             display: block;
             margin-bottom: 0.375rem;
-            color: var(--text-secondary);
+            color: var(--ink-secondary);
             font-size: 13px;
             font-weight: 500;
         }
@@ -92,39 +94,39 @@
             border-radius: var(--radius-sm);
             font-family: var(--font);
             font-size: 14px;
-            color: var(--text);
-            background: var(--surface);
+            color: var(--ink);
+            background: var(--surface-inset);
             transition: border-color 0.15s, box-shadow 0.15s;
         }
 
-        input:hover { border-color: #D4D4D4; }
-        input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(212, 117, 78, 0.1); }
+        input:hover { border-color: var(--border-emphasis); }
+        input:focus { outline: none; border-color: var(--clay); box-shadow: 0 0 0 3px rgba(196, 104, 74, 0.1); background: var(--surface); }
 
         button {
             width: 100%;
             padding: 0.625rem 1rem;
-            background: var(--text);
-            color: white;
+            background: var(--ink);
+            color: var(--parchment);
             border: none;
             border-radius: var(--radius-sm);
             font-family: var(--font);
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: background 0.15s;
+            transition: opacity 0.15s;
         }
 
-        button:hover { background: #333; }
+        button:hover { opacity: 0.85; }
 
         .auth-footer {
             text-align: center;
             margin-top: 1.5rem;
             font-size: 13px;
-            color: var(--text-muted);
+            color: var(--ink-muted);
         }
 
         .auth-footer a {
-            color: var(--accent);
+            color: var(--clay);
             text-decoration: none;
             font-weight: 500;
         }

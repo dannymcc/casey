@@ -23,9 +23,9 @@
     transition: all 0.15s;
 }
 
-.mood-option:hover { border-color: var(--accent); }
+.mood-option:hover { border-color: var(--clay); }
 .mood-option input { display: none; }
-.mood-option.selected { border-color: var(--accent); background: var(--accent-subtle); }
+.mood-option.selected { border-color: var(--clay); background: var(--clay-subtle); }
 {% endblock %}
 
 {% block content %}
@@ -43,7 +43,7 @@
             <textarea name="content" rows="16" placeholder="Write your journal entry...">{{ entry.content if entry else '' }}</textarea>
             <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap;">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 12px; color: var(--text-muted); font-weight: 500;">Mood</span>
+                    <span style="font-size: 12px; color: var(--ink-muted); font-weight: 500;">Mood</span>
                     <div class="mood-selector">
                         {% for val, label in [(1, '😔'), (2, '😐'), (3, '🙂'), (4, '😊'), (5, '🤩')] %}
                         <label class="mood-option {{ 'selected' if entry and entry.mood == val }}" title="{{ ['Rough','Meh','Okay','Good','Great'][val-1] }}" onclick="this.parentElement.querySelectorAll('.mood-option').forEach(e=>e.classList.remove('selected'));this.classList.add('selected')">
@@ -64,7 +64,7 @@
         </form>
 
         {% if entry %}
-        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 12px; color: var(--text-muted);">
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 12px; color: var(--ink-muted);">
             Created {{ entry.created_at | uk_date }}
             {% if entry.updated_at and entry.updated_at != entry.created_at %}
                 &middot; Last updated {{ entry.updated_at | uk_date }}

@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Casey - A personal productivity app for journaling, task management, and resurfacing ideas. Inspired by Casey Newton's system.">
-    <meta name="theme-color" content="#F7F7F5" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#1A1A1A" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#F0EDE6" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
     <title>Casey - Journal, Tasks, and Blips</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,43 +15,39 @@
 
         :root {
             --font: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            --bg: #F7F7F5;
-            --surface: #FFFFFF;
-            --text: #1A1A1A;
-            --text-secondary: #6B6B6B;
-            --text-muted: #9B9B9B;
-            --accent: #D4754E;
-            --accent-hover: #C0653F;
-            --accent-subtle: #FDF5F1;
-            --border: #EBEBEB;
-            --border-light: #F2F2F0;
-            --radius: 10px;
-            --radius-sm: 7px;
-            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+            --parchment: #F0EDE6;
+            --surface: #FAF9F6;
+            --ink: #2C2825;
+            --ink-secondary: #6D665E;
+            --ink-muted: #9C958B;
+            --clay: #C4684A;
+            --clay-hover: #B35C40;
+            --clay-subtle: #F6EDE9;
+            --border: rgba(44, 40, 37, 0.10);
+            --border-light: rgba(44, 40, 37, 0.06);
+            --radius: 8px;
+            --radius-sm: 6px;
         }
 
         @media (prefers-color-scheme: dark) {
             :root {
-                --bg: #1A1A1A;
-                --surface: #242424;
-                --text: #E8E8E8;
-                --text-secondary: #A0A0A0;
-                --text-muted: #707070;
-                --accent: #E08A60;
-                --accent-hover: #D4754E;
-                --accent-subtle: #2D2420;
-                --border: #333333;
-                --border-light: #2A2A2A;
-                --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
-                --shadow-md: 0 4px 12px rgba(0,0,0,0.3), 0 1px 3px rgba(0,0,0,0.2);
+                --parchment: #1C1B18;
+                --surface: #252320;
+                --ink: #E0DDD6;
+                --ink-secondary: #A09B93;
+                --ink-muted: #706B63;
+                --clay: #D4805E;
+                --clay-hover: #C4684A;
+                --clay-subtle: #2E2520;
+                --border: rgba(224, 221, 214, 0.10);
+                --border-light: rgba(224, 221, 214, 0.05);
             }
         }
 
         body {
             font-family: var(--font);
-            background: var(--bg);
-            color: var(--text);
+            background: var(--parchment);
+            color: var(--ink);
             line-height: 1.6;
             font-size: 14px;
             -webkit-font-smoothing: antialiased;
@@ -71,9 +67,9 @@
         .landing-brand {
             font-size: 1.125rem;
             font-weight: 600;
-            color: var(--text);
+            color: var(--ink);
             text-decoration: none;
-            letter-spacing: -0.02em;
+            letter-spacing: -0.025em;
         }
 
         .landing-nav {
@@ -83,7 +79,7 @@
         }
 
         .landing-nav a {
-            color: var(--text-secondary);
+            color: var(--ink-secondary);
             text-decoration: none;
             font-size: 13px;
             font-weight: 500;
@@ -93,13 +89,13 @@
         }
 
         .landing-nav a:hover {
-            color: var(--text);
-            background: rgba(128,128,128,0.08);
+            color: var(--ink);
+            background: var(--border-light);
         }
 
         .landing-nav .btn-login {
-            background: var(--text);
-            color: var(--bg);
+            background: var(--ink);
+            color: var(--parchment);
             padding: 0.5rem 1rem;
             border-radius: var(--radius-sm);
             font-weight: 500;
@@ -107,8 +103,8 @@
 
         .landing-nav .btn-login:hover {
             opacity: 0.85;
-            background: var(--text);
-            color: var(--bg);
+            background: var(--ink);
+            color: var(--parchment);
         }
 
         /* Hero */
@@ -117,11 +113,11 @@
             padding: 5rem 1.5rem 3rem;
             max-width: 640px;
             margin: 0 auto;
-            animation: enter 0.4s ease-out;
+            animation: enter 0.3s ease-out;
         }
 
         @keyframes enter {
-            from { opacity: 0; transform: translateY(12px); }
+            from { opacity: 0; transform: translateY(8px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -135,7 +131,7 @@
 
         .hero p {
             font-size: 1.0625rem;
-            color: var(--text-secondary);
+            color: var(--ink-secondary);
             line-height: 1.7;
             max-width: 480px;
             margin: 0 auto 2rem;
@@ -159,23 +155,22 @@
         }
 
         .btn-primary {
-            background: var(--accent);
+            background: var(--clay);
             color: white;
         }
 
         .btn-primary:hover {
-            background: var(--accent-hover);
+            background: var(--clay-hover);
         }
 
         .btn-secondary {
             background: var(--surface);
-            color: var(--text);
+            color: var(--ink);
             border: 1px solid var(--border);
         }
 
         .btn-secondary:hover {
-            border-color: #D4D4D4;
-            background: var(--surface);
+            border-color: rgba(44, 40, 37, 0.16);
         }
 
         /* Features */
@@ -192,15 +187,15 @@
             background: var(--surface);
             border-radius: var(--radius);
             padding: 1.75rem;
-            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
         }
 
         .feature-icon {
             width: 36px;
             height: 36px;
             border-radius: 8px;
-            background: var(--accent-subtle);
-            color: var(--accent);
+            background: var(--clay-subtle);
+            color: var(--clay);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -221,7 +216,7 @@
 
         .feature p {
             font-size: 13px;
-            color: var(--text-secondary);
+            color: var(--ink-secondary);
             line-height: 1.65;
         }
 
@@ -236,22 +231,22 @@
         .philosophy-quote {
             font-size: 1.125rem;
             font-weight: 500;
-            color: var(--accent);
+            color: var(--clay);
             line-height: 1.7;
             padding: 2rem;
-            background: var(--accent-subtle);
+            background: var(--clay-subtle);
             border-radius: var(--radius);
             margin-bottom: 1.25rem;
         }
 
         .philosophy p {
             font-size: 13px;
-            color: var(--text-muted);
+            color: var(--ink-muted);
             line-height: 1.7;
         }
 
         .philosophy a {
-            color: var(--accent);
+            color: var(--clay);
             text-decoration: none;
             font-weight: 500;
         }
@@ -273,18 +268,18 @@
         }
 
         .landing-footer-links a {
-            color: var(--text-muted);
+            color: var(--ink-muted);
             text-decoration: none;
             font-size: 12px;
             font-weight: 500;
         }
 
         .landing-footer-links a:hover {
-            color: var(--text-secondary);
+            color: var(--ink-secondary);
         }
 
         .landing-footer span {
-            color: var(--text-muted);
+            color: var(--ink-muted);
             font-size: 12px;
         }
 

@@ -44,7 +44,7 @@
     <div id="bulk-form" class="card" style="margin-bottom: 1rem; display: none;">
         <form method="POST" action="/blips/bulk-add">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 0.5rem;">One blip per line</div>
+            <div style="font-size: 13px; color: var(--ink-secondary); margin-bottom: 0.5rem;">One blip per line</div>
             <textarea name="content" rows="6" placeholder="First blip&#10;Second blip&#10;Third blip..." required style="min-height: 100px;"></textarea>
             <div style="margin-top: 0.625rem;">
                 <button type="submit">Add All</button>
@@ -101,7 +101,7 @@
         {% endfor %}
         {% if has_more %}
         <div style="text-align: center; margin-top: 1rem;">
-            <a href="?show={{ show }}&page={{ page + 1 }}" style="color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 500;">Show more</a>
+            <a href="?show={{ show }}&page={{ page + 1 }}" style="color: var(--clay); text-decoration: none; font-size: 13px; font-weight: 500;">Show more</a>
         </div>
         {% endif %}
     {% else %}

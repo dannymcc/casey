@@ -18,7 +18,7 @@
 
 .subtask-list li.completed span {
     text-decoration: line-through;
-    color: var(--text-muted);
+    color: var(--ink-muted);
 }
 {% endblock %}
 
@@ -73,7 +73,7 @@
 
         {% if subtasks %}
         <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
-            <div style="font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Subtasks</div>
+            <div style="font-size: 12px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Subtasks</div>
             <ul class="subtask-list">
                 {% for sub in subtasks %}
                 <li class="{{ 'completed' if sub.completed }}">
@@ -98,7 +98,7 @@
             <button type="submit" style="font-size: 12px; padding: 0.375rem 0.75rem; min-height: auto;">Add</button>
         </form>
 
-        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 12px; color: var(--text-muted);">
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 12px; color: var(--ink-muted);">
             Created {{ task.created_at | uk_date }}
             {% if task.completed_at %}
                 &middot; Completed {{ task.completed_at | uk_date }}

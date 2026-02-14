@@ -14,20 +14,20 @@
     background: var(--surface);
     border-radius: var(--radius-sm);
     padding: 1rem;
-    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
     text-align: center;
 }
 
 .admin-stat-value {
     font-size: 1.5rem;
     font-weight: 600;
-    color: var(--text);
+    color: var(--ink);
     letter-spacing: -0.02em;
 }
 
 .admin-stat-label {
     font-size: 11px;
-    color: var(--text-muted);
+    color: var(--ink-muted);
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -45,7 +45,7 @@
     padding: 0.625rem 0.75rem;
     font-size: 11px;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--ink-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     border-bottom: 1px solid var(--border);
@@ -54,7 +54,7 @@
 .user-table td {
     padding: 0.625rem 0.75rem;
     border-bottom: 1px solid var(--border-light);
-    color: var(--text-secondary);
+    color: var(--ink-secondary);
 }
 
 .user-table tr:last-child td {
@@ -65,8 +65,8 @@
     font-size: 10px;
     padding: 0.125rem 0.375rem;
     border-radius: 3px;
-    background: var(--accent-subtle);
-    color: var(--accent);
+    background: var(--clay-subtle);
+    color: var(--clay);
     font-weight: 600;
     margin-left: 0.375rem;
 }
@@ -76,13 +76,13 @@
     padding: 0.25rem 0.5rem;
     min-height: auto;
     background: var(--surface);
-    color: var(--text-secondary);
+    color: var(--ink-secondary);
     border: 1px solid var(--border);
 }
 
 .admin-toggle:hover {
-    border-color: var(--accent);
-    color: var(--accent);
+    border-color: var(--clay);
+    color: var(--clay);
     opacity: 1;
 }
 {% endblock %}
@@ -138,7 +138,7 @@
                     {% for user in users %}
                     <tr>
                         <td>
-                            <strong style="color: var(--text);">{{ user.username }}</strong>
+                            <strong style="color: var(--ink);">{{ user.username }}</strong>
                             {% if user.is_admin %}<span class="admin-badge">Admin</span>{% endif %}
                         </td>
                         <td>{{ user.entry_count }}</td>
@@ -182,7 +182,7 @@
                     <tr>
                         <td style="white-space: nowrap;">{{ entry.created_at | uk_date }}</td>
                         <td>{{ entry.username or '—' }}</td>
-                        <td><code style="font-size: 11px; padding: 0.125rem 0.375rem; background: var(--border-light); border-radius: 3px;">{{ entry.action }}</code></td>
+                        <td><code style="font-size: 11px; padding: 0.125rem 0.375rem; background: var(--surface-inset); border-radius: 3px;">{{ entry.action }}</code></td>
                         <td>{{ entry.detail or '—' }}</td>
                         <td style="font-family: var(--mono); font-size: 11px;">{{ entry.ip_address or '—' }}</td>
                     </tr>

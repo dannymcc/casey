@@ -21,7 +21,7 @@
             </div>
         </form>
 
-        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 12px; color: var(--text-muted);">
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 12px; color: var(--ink-muted);">
             Created {{ blip.created_at | uk_date }}
             {% if blip.updated_at and blip.updated_at != blip.created_at %}
              &middot; Updated {{ blip.updated_at | uk_date }}
