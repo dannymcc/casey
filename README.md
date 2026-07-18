@@ -49,12 +49,10 @@ The blips system is the key differentiator. Unlike traditional note-taking where
 # Create a directory for Casey
 mkdir casey && cd casey
 
-# Download docker-compose.yml
-curl -O https://raw.githubusercontent.com/dannymcc/casey/master/docker-compose.yml
+# Download the ready-to-run compose file
+curl -o docker-compose.yml https://raw.githubusercontent.com/dannymcc/casey/master/docker-compose.synology.yml
 
-# Create your environment file
-cp .env.example .env
-# Edit .env and set a strong SECRET_KEY
+# Edit docker-compose.yml and set SECRET_KEY to a long random string
 
 # Start the container
 docker compose up -d
@@ -74,6 +72,20 @@ docker run -d \
 Access the application at `http://localhost:5090`
 
 The first registered user is automatically promoted to admin.
+
+### Synology NAS
+
+Casey runs nicely on a Synology NAS with Container Manager (DSM 7.2 or later):
+
+1. Open **Container Manager** and go to **Project** → **Create**
+2. Set the project name to `casey` and accept the suggested path (e.g. `/docker/casey`)
+3. Choose **Create docker-compose.yml** as the source and paste in the contents of [`docker-compose.synology.yml`](docker-compose.synology.yml)
+4. Change `SECRET_KEY` to a long random string
+5. Click through the wizard to build and start the project
+
+Casey will be available at `http://<nas-ip>:5090`. Your data is stored in a Docker volume (`casey-data`), so it survives updates. To update later, open the project in Container Manager and choose **Action** → **Clean and rebuild** (or run `docker compose pull && docker compose up -d` from the project folder over SSH).
+
+On older DSM versions with the Docker package (no Projects feature), use the `docker run` command above via SSH instead.
 
 ### Manual Installation
 

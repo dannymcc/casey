@@ -1,0 +1,32 @@
+# Casey — easy install for Synology Container Manager (or any Docker host).
+#
+# Synology DSM 7.2+:
+#   1. Open Container Manager and go to Project, then Create
+#   2. Project name: casey (path can be the default, e.g. /docker/casey)
+#   3. Choose "Create docker-compose.yml" and paste this file in
+#   4. Change SECRET_KEY below to a long random string
+#   5. Click through to build and start, then open http://<nas-ip>:5090
+#
+# The first account you register becomes the admin.
+#
+# Generate a strong SECRET_KEY with:
+#   python3 -c "import secrets; print(secrets.token_hex(32))"
+# (any long random string works)
+
+services:
+  casey:
+    image: ghcr.io/dannymcc/casey:latest
+    container_name: casey
+    ports:
+      - "5090:5090"
+    volumes:
+      # Named volume avoids bind-mount permission issues on Synology.
+      # The SQLite database lives inside it at /app/data/casey.db
+      - casey-data:/app/data
+    environment:
+      # REQUIRED: change this before starting
+      - SECRET_KEY=replace-me-with-a-long-random-string
+    restart: unless-stopped
+
+volumes:
+  casey-data:
