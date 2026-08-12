@@ -26,9 +26,10 @@
 }
 
 .cal-month {
-    font-size: 1.0625rem;
+    font-family: var(--display);
+    font-size: 1.25rem;
     font-weight: 600;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
 }
 
 .cal-grid {
@@ -44,11 +45,12 @@
     background: var(--surface);
     padding: 0.5rem;
     text-align: center;
-    font-size: 11px;
-    font-weight: 600;
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 500;
     color: var(--ink-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.14em;
 }
 
 .cal-day {
@@ -64,11 +66,12 @@
 }
 
 .cal-day-num {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--ink-secondary);
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--ink-muted);
     display: block;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.375rem;
 }
 
 .cal-day.has-entry .cal-day-num {
@@ -89,7 +92,10 @@
 }
 
 .cal-mood {
-    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 13px;
     line-height: 1;
 }
 
@@ -118,10 +124,12 @@
 }
 
 .cal-stat-num {
-    font-size: 1.25rem;
-    font-weight: 700;
+    font-family: var(--display);
+    font-size: 1.625rem;
+    font-weight: 600;
     color: var(--ink);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
 }
 
 .cal-stat-num.accent {
@@ -129,12 +137,13 @@
 }
 
 .cal-stat-label {
-    font-size: 10px;
-    font-weight: 600;
+    font-family: var(--mono);
+    font-size: 9.5px;
+    font-weight: 500;
     color: var(--ink-muted);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-top: 0.125rem;
+    letter-spacing: 0.14em;
+    margin-top: 0.25rem;
 }
 
 @media (max-width: 480px) {
@@ -149,7 +158,7 @@
 {% block content %}
 <div style="max-width: 600px;">
     <h1 class="page-title">Calendar</h1>
-    <p class="page-desc">Journal entries at a glance</p>
+    <p class="page-desc">The days you wrote something, and how they felt.</p>
 
     <div class="card">
         <div class="cal-nav">
@@ -180,7 +189,7 @@
                         {% endif %}
                             <span class="cal-day-num">{{ day }}</span>
                             {% if mood %}
-                                <span class="cal-mood">{{ ['','😔','😐','🙂','😊','🤩'][mood] }}</span>
+                                <span class="cal-mood"><span class="mood-mark m{{ mood }}" title="{{ ['','Rough','Meh','Okay','Good','Great'][mood] }}"></span></span>
                             {% elif has_entry %}
                                 <span class="cal-dot"></span>
                             {% endif %}

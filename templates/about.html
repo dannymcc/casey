@@ -5,121 +5,148 @@
 {% block extra_styles %}
 .about-content {
     max-width: 620px;
-    line-height: 1.85;
-    font-size: 14.5px;
+}
+
+.about-content h1 {
+    font-family: var(--display);
+    font-size: 2.25rem;
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    margin-bottom: 2rem;
 }
 
 .about-content h2 {
-    font-size: 1.375rem;
-    font-weight: 600;
-    letter-spacing: -0.025em;
-    margin-bottom: 1.5rem;
-}
-
-.about-content h3 {
-    font-size: 1rem;
-    font-weight: 600;
-    margin-top: 2.5rem;
-    margin-bottom: 0.75rem;
-    letter-spacing: -0.01em;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-muted);
+    margin-top: 3rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.625rem;
+    border-bottom: 1px solid var(--border);
 }
 
 .about-content p {
+    font-family: var(--display);
+    font-size: 1.0625rem;
+    line-height: 1.8;
     margin-bottom: 1.25rem;
     color: var(--ink-secondary);
 }
 
 .about-content strong {
     color: var(--ink);
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .about-content a {
     color: var(--clay);
     text-decoration: none;
-    font-weight: 500;
+    border-bottom: 1px solid var(--clay-rule);
 }
 
-.about-content a:hover { text-decoration: underline; }
+.about-content a:hover { border-bottom-color: var(--clay); }
 
 .about-content ul {
+    list-style: none;
     margin-bottom: 1.5rem;
-    margin-left: 1.25rem;
-    color: var(--ink-secondary);
 }
 
 .about-content ul li {
-    margin-bottom: 0.5rem;
+    font-family: var(--display);
+    font-size: 1.0625rem;
+    line-height: 1.75;
+    color: var(--ink-secondary);
+    border-left: 1px solid var(--border);
+    padding-left: 1.25rem;
+    margin-bottom: 1rem;
 }
 
 .pullquote {
-    padding: 1.25rem 1.5rem;
-    background: var(--clay-subtle);
-    border-radius: var(--radius);
-    color: var(--clay);
-    font-weight: 500;
-    margin-bottom: 1.5rem;
-    font-size: 15px;
-    line-height: 1.7;
+    font-family: var(--display);
+    font-size: 1.375rem;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--ink);
+    border-left: 2px solid var(--clay-rule);
+    padding-left: 1.5rem;
+    margin: 2rem 0;
+}
+
+.about-colophon {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+}
+
+@media (max-width: 600px) {
+    .about-content h1 { font-size: 1.875rem; }
+    .pullquote { font-size: 1.1875rem; padding-left: 1.125rem; }
+    .about-content ul li { padding-left: 1rem; }
 }
 {% endblock %}
 
 {% block content %}
 <article class="about-content">
-    <h2>About Casey</h2>
+    <h1>About Casey</h1>
 
     <p>
         Casey is a personal productivity app inspired by <strong>Casey Newton</strong>, editor of the Platformer newsletter and co-host of the <em>Hard Fork</em> podcast with Kevin Roose.
     </p>
 
-    <h3>The Origin Story</h3>
+    <h2>Where it came from</h2>
 
     <p>
-        During an episode of Hard Fork, Casey Newton shared his personal productivity system&mdash;a combination of morning journaling, task management, and a unique concept he calls <strong>&ldquo;blips&rdquo;</strong>: quick thoughts and ideas captured throughout the day that randomly resurface to spark creativity and reflection.
+        On an episode of Hard Fork, Casey Newton described the system he uses to keep his own work in order: morning journaling, a short task list, and a habit he calls <strong>&ldquo;blips&rdquo;</strong> &mdash; quick thoughts captured during the day that come back at random to prompt a second look.
     </p>
 
     <p>
-        His approach struck a chord: simple, focused, and designed around clearing your head each morning rather than complex project management. It felt refreshingly human in a world of over-engineered productivity apps.
+        The appeal was that it is built around clearing your head each morning rather than managing a project plan, which felt refreshingly human next to most productivity software.
     </p>
 
-    <h3>The System</h3>
+    <h2>The system</h2>
 
-    <p>Casey&rsquo;s productivity system has three core components:</p>
+    <p>Casey&rsquo;s system has three parts:</p>
 
     <ul>
-        <li><strong>Morning Journal</strong> &mdash; Start each day by clearing your head. Write freely about what&rsquo;s on your mind.</li>
-        <li><strong>Task Management</strong> &mdash; Simple, actionable tasks. No over-planning. Just what needs doing today.</li>
-        <li><strong>Blips</strong> &mdash; Ongoing topics, questions, or ideas you&rsquo;re tracking. The system randomly surfaces a few each day&mdash;a form of spaced repetition that keeps important themes alive.</li>
+        <li><strong>Morning journal</strong> &mdash; start the day by clearing your head, writing freely about whatever is on your mind.</li>
+        <li><strong>Tasks</strong> &mdash; simple, actionable things. No over-planning, just what needs doing today.</li>
+        <li><strong>Blips</strong> &mdash; topics, questions and ideas you are tracking. Casey surfaces a few each day, a kind of spaced repetition that keeps the important themes alive.</li>
     </ul>
 
     <p>
-        This app is a faithful digital implementation of that system. No feature creep. No notifications. No gamification. Just the essentials for thinking clearly and getting things done.
+        This app is a faithful digital version of that system, and it is deliberately small: no notifications, no scores, and nothing that nags you into using it.
     </p>
 
-    <h3>The Philosophy</h3>
+    <h2>The philosophy</h2>
 
     <p>
         Casey isn&rsquo;t here to guarantee gains in your productivity. It&rsquo;s not here to ensure you journal every day, or document every experience.
     </p>
 
     <div class="pullquote">
-        Casey exists to get out of your way. For you to be present. Add what you need, ignore what you don&rsquo;t.
+        Casey exists to get out of your way, so that you can be present. Add what you need, ignore what you don&rsquo;t.
     </div>
 
     <p>
-        Use it daily or weekly. Fill every field or just one. There are no streaks to maintain, no points to earn, no guilt if you skip a day. This is a tool that adapts to you&mdash;not the other way around.
+        Use it daily or weekly. Fill every field or just one. There are no streaks to maintain, no points to earn, and no guilt if you skip a day. The tool adapts to you rather than the other way around.
     </p>
 
-    <h3>The Name</h3>
+    <h2>The name</h2>
 
     <p>
-        Named after Casey Newton himself&mdash;both as a tribute to his system and because it felt right. If you enjoy Casey&rsquo;s work, subscribe to <a href="https://www.platformer.news/" target="_blank" rel="noopener">Platformer</a> and listen to <a href="https://www.nytimes.com/column/hard-fork" target="_blank" rel="noopener">Hard Fork</a>.
+        Named after Casey Newton himself, as a tribute to the system and because it felt right. If you enjoy his work, subscribe to <a href="https://www.platformer.news/" target="_blank" rel="noopener">Platformer</a> and listen to <a href="https://www.nytimes.com/column/hard-fork" target="_blank" rel="noopener">Hard Fork</a>.
     </p>
 
-    <div style="margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border-light);">
-        <p style="font-size: 13px; color: var(--ink-muted); margin-bottom: 0;">
-            Built with Flask and SQLite. Deployed with Docker. Designed to stay simple.
-        </p>
+    <div class="about-colophon">
+        Built with Flask and SQLite. Deployed with Docker. Designed to stay simple.
     </div>
 </article>
 {% endblock %}

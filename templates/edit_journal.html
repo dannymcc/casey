@@ -3,9 +3,73 @@
 {% block title %}Edit Entry - Casey{% endblock %}
 
 {% block extra_styles %}
+.entry-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+}
+
+.writing {
+    border-left: 1px solid var(--clay-rule);
+    padding-left: 1.5rem;
+    transition: border-color 0.2s ease;
+}
+
+.writing:focus-within { border-left-color: var(--clay); }
+
+.writing textarea {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    resize: none;
+    min-height: 320px;
+    font-family: var(--display);
+    font-size: 1.0625rem;
+    line-height: 1.8;
+}
+
+.writing textarea:hover { border: none; }
+
+.writing textarea:focus,
+.writing textarea:focus-visible {
+    outline: none;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.entry-foot {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    padding-left: 1.5rem;
+    border-top: 1px solid var(--border-light);
+    flex-wrap: wrap;
+}
+
+.mood-field {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+}
+
+.mood-label {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ink-muted);
+}
+
 .mood-selector {
     display: flex;
-    gap: 0.25rem;
+    gap: 0.375rem;
     align-items: center;
 }
 
@@ -14,63 +78,145 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 28px;
-    height: 28px;
+    padding: 0.25rem;
     border-radius: 50%;
-    font-size: 14px;
-    border: 1px solid var(--border);
-    background: var(--surface);
-    transition: all 0.15s;
+    position: relative;
 }
 
-.mood-option:hover { border-color: var(--clay); }
-.mood-option input { display: none; }
-.mood-option.selected { border-color: var(--clay); background: var(--clay-subtle); }
+.mood-option input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+}
+
+.mood-dot {
+    display: block;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-emphasis);
+    background: transparent;
+    transition: all 0.15s ease;
+}
+
+.mood-option:nth-child(1) .mood-dot { width: 8px; height: 8px; }
+.mood-option:nth-child(2) .mood-dot { width: 10px; height: 10px; }
+.mood-option:nth-child(3) .mood-dot { width: 12px; height: 12px; }
+.mood-option:nth-child(4) .mood-dot { width: 14px; height: 14px; }
+.mood-option:nth-child(5) .mood-dot { width: 16px; height: 16px; }
+
+.mood-option:hover .mood-dot { border-color: var(--clay); }
+
+.mood-option.selected .mood-dot {
+    background: var(--clay);
+    border-color: var(--clay);
+}
+
+.mood-option input:focus-visible + .mood-dot {
+    outline: 2px solid var(--clay);
+    outline-offset: 2px;
+}
+
+.mood-word {
+    font-size: 12.5px;
+    color: var(--ink-secondary);
+    min-width: 3.25rem;
+}
+
+.tags-field { flex: 1; min-width: 160px; max-width: 300px; }
+
+.tags-field input[type="text"] {
+    font-size: 12.5px;
+    padding: 0.375rem 0.625rem;
+    background: transparent;
+    border-color: var(--border-light);
+}
+
+.tags-field input[type="text"]:hover { border-color: var(--border); }
+
+.entry-meta {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+}
+
+@media (max-width: 600px) {
+    .writing, .entry-foot { padding-left: 1rem; }
+    .writing textarea { min-height: 240px; }
+    .tags-field { max-width: 100%; }
+}
 {% endblock %}
 
 {% block content %}
 <div style="max-width: 680px;">
     <a href="/history" class="back-link">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12L6 8l4-4"/></svg>
-        Back to History
+        Back to history
     </a>
 
     <div class="card">
-        <h2>{{ entry_date | uk_date_long }}</h2>
+        <div class="entry-head">
+            <span class="entry-date">{{ entry_date | uk_date_long }}</span>
+        </div>
 
         <form method="POST" action="/journal/{{ entry_date }}/edit">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <textarea name="content" rows="16" placeholder="Write your journal entry...">{{ entry.content if entry else '' }}</textarea>
-            <div style="display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; flex-wrap: wrap;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="font-size: 12px; color: var(--ink-muted); font-weight: 500;">Mood</span>
-                    <div class="mood-selector">
-                        {% for val, label in [(1, '😔'), (2, '😐'), (3, '🙂'), (4, '😊'), (5, '🤩')] %}
-                        <label class="mood-option {{ 'selected' if entry and entry.mood == val }}" title="{{ ['Rough','Meh','Okay','Good','Great'][val-1] }}" onclick="this.parentElement.querySelectorAll('.mood-option').forEach(e=>e.classList.remove('selected'));this.classList.add('selected')">
-                            <input type="radio" name="mood" value="{{ val }}" {{ 'checked' if entry and entry.mood == val }}>
-                            {{ label }}
+            <div class="writing">
+                <textarea name="content" rows="16" placeholder="What happened that day?" aria-label="Journal entry">{{ entry.content if entry else '' }}</textarea>
+            </div>
+            <div class="entry-foot">
+                <div class="mood-field">
+                    <span class="mood-label">Mood</span>
+                    <div class="mood-selector" id="mood-selector">
+                        {% for val, label in [(1, 'Rough'), (2, 'Meh'), (3, 'Okay'), (4, 'Good'), (5, 'Great')] %}
+                        <label class="mood-option {{ 'selected' if entry and entry.mood == val }}" title="{{ label }}" data-word="{{ label }}">
+                            <input type="radio" name="mood" value="{{ val }}" aria-label="{{ label }}" {{ 'checked' if entry and entry.mood == val }}>
+                            <span class="mood-dot" aria-hidden="true"></span>
                         </label>
                         {% endfor %}
                     </div>
+                    <span class="mood-word" id="mood-word">{{ ['Rough','Meh','Okay','Good','Great'][entry.mood - 1] if entry and entry.mood else '' }}</span>
                 </div>
-                <div style="flex: 1; min-width: 150px;">
-                    <input type="text" name="tags" value="{{ entry_tags }}" placeholder="Tags (comma-separated)" style="font-size: 12px; padding: 0.375rem 0.625rem;">
+                <div class="tags-field">
+                    <input type="text" name="tags" value="{{ entry_tags }}" placeholder="Tags, separated by commas" aria-label="Tags">
                 </div>
             </div>
             <div class="btn-group">
-                <button type="submit">Save Changes</button>
+                <button type="submit">Save changes</button>
                 <a href="/history" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
 
         {% if entry %}
-        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 12px; color: var(--ink-muted);">
-            Created {{ entry.created_at | uk_date }}
+        <div class="entry-meta">
+            Written {{ entry.created_at | uk_date }}
             {% if entry.updated_at and entry.updated_at != entry.created_at %}
-                &middot; Last updated {{ entry.updated_at | uk_date }}
+                &middot; last edited {{ entry.updated_at | uk_date }}
             {% endif %}
         </div>
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+    var selector = document.getElementById('mood-selector');
+    var word = document.getElementById('mood-word');
+    if (!selector) return;
+    selector.addEventListener('change', function(e) {
+        if (e.target.name !== 'mood') return;
+        var option = e.target.closest('.mood-option');
+        selector.querySelectorAll('.mood-option').forEach(function(el) { el.classList.remove('selected'); });
+        option.classList.add('selected');
+        if (word) word.textContent = option.dataset.word;
+    });
+})();
+</script>
 {% endblock %}
