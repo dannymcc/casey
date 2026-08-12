@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Casey - A personal productivity app for journaling, task management, and resurfacing ideas. Inspired by Casey Newton's system.">
+    <meta name="description" content="Casey is a calm place for morning journaling, a short task list, and blips - ideas you park and Casey brings back weeks later. Free, nothing tracked, and self-hostable.">
     <meta name="theme-color" content="#F0EDE6" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="32x32">
@@ -80,11 +80,40 @@
             border-radius: 2px;
         }
 
+        /* Shared section furniture */
+        .eyebrow {
+            font-family: var(--mono);
+            font-size: 10.5px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--clay);
+            margin-bottom: 1.25rem;
+        }
+
+        .section-head {
+            font-family: var(--display);
+            font-size: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            line-height: 1.2;
+            max-width: 20ch;
+            margin-bottom: 1rem;
+        }
+
+        .section-lede {
+            font-size: 1.0625rem;
+            color: var(--ink-secondary);
+            line-height: 1.7;
+            max-width: 56ch;
+        }
+
         /* Header */
         .landing-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            gap: 1rem;
             height: 76px;
         }
 
@@ -102,7 +131,7 @@
         .landing-nav {
             display: flex;
             align-items: center;
-            gap: 1.25rem;
+            gap: 1.5rem;
         }
 
         .landing-nav a {
@@ -115,7 +144,7 @@
 
         .landing-nav a:hover { color: var(--ink); }
 
-        .landing-nav .btn-login {
+        .landing-nav .btn-register {
             background: var(--ink);
             color: var(--parchment);
             padding: 0.5rem 1.125rem;
@@ -123,7 +152,7 @@
             transition: background 0.15s;
         }
 
-        .landing-nav .btn-login:hover { background: var(--ink-secondary); color: var(--parchment); }
+        .landing-nav .btn-register:hover { background: var(--ink-secondary); color: var(--parchment); }
 
         /* Hero */
         .hero {
@@ -159,14 +188,14 @@
             margin-bottom: 2rem;
         }
 
-        .hero-cta {
+        .cta-row {
             display: flex;
             gap: 0.75rem;
             flex-wrap: wrap;
             align-items: center;
         }
 
-        .hero-cta a {
+        .cta-row a {
             text-decoration: none;
             font-family: var(--font);
             font-size: 14px;
@@ -188,10 +217,8 @@
         .btn-secondary:hover { background: var(--surface); border-color: var(--ink-faint); }
 
         .hero-note {
-            font-family: var(--mono);
-            font-size: 11px;
-            letter-spacing: 0.06em;
-            color: var(--ink-faint);
+            font-size: 13px;
+            color: var(--ink-muted);
             margin-top: 1.25rem;
         }
 
@@ -368,14 +395,132 @@
             line-height: 1.7;
         }
 
+        /* How blips work — the one idea worth spending a section on */
+        .story {
+            padding: 4rem 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .story-steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0;
+            margin-top: 3rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .step {
+            padding: 1.75rem 2rem 0 0;
+            position: relative;
+        }
+
+        .step + .step { padding-left: 2rem; border-left: 1px solid var(--border); }
+        .step:last-child { padding-right: 0; }
+
+        /* The mark that grows across the sequence */
+        .step-mark {
+            height: 18px;
+            display: flex;
+            align-items: center;
+            gap: 3.5px;
+            margin-bottom: 1rem;
+        }
+
+        .step-mark i {
+            display: block;
+            width: 2px;
+            height: 18px;
+            background: var(--clay);
+            border-radius: 1px;
+        }
+
+        .step-mark .none {
+            font-family: var(--mono);
+            font-size: 10px;
+            letter-spacing: 0.08em;
+            color: var(--ink-faint);
+        }
+
+        .step-when {
+            font-family: var(--mono);
+            font-size: 10.5px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--ink-secondary);
+            margin-bottom: 0.625rem;
+        }
+
+        .step p {
+            font-size: 14.5px;
+            color: var(--ink-secondary);
+            line-height: 1.7;
+        }
+
+        /* Read as a footnote to the sequence above, with a footnote's short rule */
+        .story-foot {
+            position: relative;
+            margin-top: 2.25rem;
+            padding-top: 1.75rem;
+            font-size: 14.5px;
+            line-height: 1.7;
+            color: var(--ink-secondary);
+            max-width: 58ch;
+        }
+
+        .story-foot::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3rem;
+            height: 1px;
+            background: var(--border-emphasis);
+        }
+
+        /* The argument */
+        .promise {
+            padding: 4rem 0;
+            border-top: 1px solid var(--border);
+        }
+
+        .promise-list {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2.5rem;
+            margin-top: 2.5rem;
+        }
+
+        .promise-item h3 {
+            font-family: var(--display);
+            font-size: 1.1875rem;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+            margin-bottom: 0.5rem;
+        }
+
+        .promise-item p {
+            font-size: 14.5px;
+            color: var(--ink-secondary);
+            line-height: 1.7;
+        }
+
+        .promise-item a {
+            color: var(--clay);
+            text-decoration: none;
+            border-bottom: 1px solid var(--clay-rule);
+        }
+
+        .promise-item a:hover { border-bottom-color: var(--clay); }
+
         /* Philosophy */
         .philosophy {
-            padding: 3.5rem 0 4.5rem;
+            padding: 4rem 0;
             border-top: 1px solid var(--border);
-            max-width: 620px;
         }
 
         .philosophy-quote {
+            max-width: 620px;
             font-family: var(--display);
             font-size: 1.5rem;
             font-style: italic;
@@ -392,6 +537,7 @@
             color: var(--ink-secondary);
             line-height: 1.75;
             padding-left: calc(1.5rem + 2px);
+            max-width: 620px;
         }
 
         .philosophy a {
@@ -401,6 +547,49 @@
         }
 
         .philosophy a:hover { border-bottom-color: var(--clay); }
+
+        /* Closing */
+        .closing {
+            margin: 2rem 0 4.5rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .closing h2 {
+            font-family: var(--display);
+            font-size: 2.25rem;
+            font-weight: 600;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 0.875rem;
+        }
+
+        .closing p {
+            font-size: 1rem;
+            color: var(--ink-secondary);
+            max-width: 46ch;
+            margin: 0 auto 2rem;
+            line-height: 1.7;
+        }
+
+        .closing .cta-row { justify-content: center; }
+
+        .closing-note {
+            margin-top: 1.5rem;
+            font-size: 13px;
+            color: var(--ink-muted);
+        }
+
+        .closing-note a {
+            color: var(--ink-secondary);
+            text-decoration: none;
+            border-bottom: 1px solid var(--border-emphasis);
+        }
+
+        .closing-note a:hover { color: var(--ink); }
 
         /* Footer */
         .landing-footer {
@@ -416,6 +605,7 @@
         .landing-footer-links {
             display: flex;
             gap: 1.5rem;
+            flex-wrap: wrap;
         }
 
         .landing-footer-links a {
@@ -443,20 +633,30 @@
             }
             .hero h1 { font-size: 3rem; }
             .parts { grid-template-columns: 1fr; gap: 2.25rem; padding: 3rem 0; }
+            .promise-list { grid-template-columns: 1fr; gap: 2rem; }
+            .story-steps { grid-template-columns: 1fr; margin-top: 2.25rem; }
+            .step { padding: 1.75rem 0 0; }
+            .step + .step { padding-left: 0; border-left: none; border-top: 1px solid var(--border); }
+            .section-head { font-size: 1.75rem; }
         }
 
         @media (max-width: 560px) {
             .wrap { padding: 0 1.25rem; }
-            .landing-header { height: 64px; }
+            .landing-header { height: 64px; gap: 0.875rem; }
+            .landing-nav { gap: 1rem; }
+            .landing-nav .about-link { display: none; }
             .hero { padding: 2rem 0 3rem; gap: 2.5rem; }
             .hero h1 { font-size: 2.375rem; }
             .hero-lede { font-size: 1rem; margin-bottom: 1.75rem; }
-            .hero-cta { flex-direction: column; align-items: stretch; }
-            .hero-cta a { text-align: center; }
+            .cta-row { flex-direction: column; align-items: stretch; }
+            .cta-row a { text-align: center; }
             .specimen { padding: 1.25rem; }
             .spec-cols { grid-template-columns: 1fr; gap: 1.25rem; }
+            .story, .promise, .philosophy { padding: 3rem 0; }
             .philosophy-quote { font-size: 1.25rem; padding-left: 1.125rem; }
             .philosophy p { padding-left: calc(1.125rem + 2px); }
+            .closing { padding: 2.25rem 1.5rem; margin-bottom: 3rem; }
+            .closing h2 { font-size: 1.875rem; }
             .landing-footer { padding: 1.5rem 0 2rem; }
         }
 
@@ -474,8 +674,9 @@
         <header class="landing-header">
             <span class="landing-brand">casey<span class="stop">.</span></span>
             <nav class="landing-nav">
-                <a href="/about">About</a>
-                <a href="/login" class="btn-login">Log in</a>
+                <a href="/about" class="about-link">About</a>
+                <a href="/login">Log in</a>
+                <a href="/register" class="btn-register">Create free account</a>
             </nav>
         </header>
 
@@ -483,11 +684,11 @@
             <div>
                 <h1>A page for<br>each day<span class="stop">.</span></h1>
                 <p class="hero-lede">Casey holds your morning writing, a short list of what needs doing, and the ideas you would rather not lose. It brings those ideas back weeks later, on an ordinary morning, when they are worth another look.</p>
-                <div class="hero-cta">
+                <div class="cta-row">
                     <a href="/register" class="btn-primary">Create a free account</a>
                     <a href="/about" class="btn-secondary">Read about Casey</a>
                 </div>
-                <p class="hero-note">Free &middot; No adverts &middot; No tracking</p>
+                <p class="hero-note">Free to use, with nothing tracked and nothing to install.</p>
             </div>
 
             <div class="specimen" aria-hidden="true">
@@ -537,6 +738,52 @@
             </div>
         </section>
 
+        <section class="story">
+            <div class="eyebrow">How blips work</div>
+            <h2 class="section-head">The idea you had in July, back in front of you in September.</h2>
+            <p class="section-lede">A blip is a thought you are not ready to do anything with yet. Casey keeps hold of it and puts a few on your Today page each morning, picked at random from everything you have parked.</p>
+
+            <div class="story-steps">
+                <div class="step">
+                    <div class="step-mark"><span class="none">not yet surfaced</span></div>
+                    <div class="step-when">The day you think of it</div>
+                    <p>You type one line and get on with your morning. There is no folder to choose and nothing to organise afterwards.</p>
+                </div>
+                <div class="step">
+                    <div class="step-mark"><i></i><i></i></div>
+                    <div class="step-when">A few weeks later</div>
+                    <p>It turns up beside that day's writing. Sometimes you act on it. Most days you read it again and leave it where it is.</p>
+                </div>
+                <div class="step">
+                    <div class="step-mark"><i></i><i></i><i></i><i></i><i></i></div>
+                    <div class="step-when">The fifth time round</div>
+                    <p>The tally shows how often an idea has come back. When the same one keeps returning, that is usually worth paying attention to.</p>
+                </div>
+            </div>
+
+            <p class="story-foot">The ideas you have seen least often come back soonest, so nothing sits at the bottom of a list for a year going stale.</p>
+        </section>
+
+        <section class="promise">
+            <div class="eyebrow">What you are signing up for</div>
+            <h2 class="section-head">Free, private, and yours to take away.</h2>
+
+            <div class="promise-list">
+                <div class="promise-item">
+                    <h3>It costs nothing</h3>
+                    <p>An account is free. There are no adverts anywhere in Casey, and nothing is sold on the side.</p>
+                </div>
+                <div class="promise-item">
+                    <h3>Nothing follows you around</h3>
+                    <p>No analytics and no tracking scripts. Signing up takes a username and a password, and you can turn on two-factor login if you want it.</p>
+                </div>
+                <div class="promise-item">
+                    <h3>Your writing stays yours</h3>
+                    <p>Export the lot as JSON or CSV whenever you like. If you would rather keep it on your own machine, Casey runs in Docker and <a href="https://github.com/dannymcc/casey" target="_blank" rel="noopener">the source is public</a>.</p>
+                </div>
+            </div>
+        </section>
+
         <section class="philosophy">
             <blockquote class="philosophy-quote">
                 Casey exists to get out of your way, so that you can be present. Add what you need, ignore what you don't.
@@ -544,11 +791,21 @@
             <p>Inspired by <a href="/about">Casey Newton's productivity system</a>. Use it daily or weekly. There are no streaks to maintain, no points to earn, and no guilt if you skip a day.</p>
         </section>
 
+        <section class="closing">
+            <h2>Start tomorrow morning</h2>
+            <p>Pick a username, pick a password, and your first page is ready. Nothing else to set up, and no card to hand over.</p>
+            <div class="cta-row">
+                <a href="/register" class="btn-primary">Create a free account</a>
+            </div>
+            <p class="closing-note">Been here before? <a href="/login">Log in</a></p>
+        </section>
+
         <footer class="landing-footer">
             <div class="landing-footer-links">
                 <a href="/about">About</a>
                 <a href="/terms">Terms</a>
                 <a href="/privacy">Privacy</a>
+                <a href="https://github.com/dannymcc/casey" target="_blank" rel="noopener">Source on GitHub</a>
             </div>
             <span class="version">Casey v{{ config.VERSION }}</span>
         </footer>
