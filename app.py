@@ -515,6 +515,14 @@ def set_security_headers(response):
     return response
 
 
+@app.route('/sw.js')
+def service_worker():
+    """Serve the service worker from the root path so its scope covers the whole app."""
+    response = app.send_static_file('sw.js')
+    response.headers['Cache-Control'] = 'no-cache'
+    return response
+
+
 # --- Auth routes ---
 
 @app.route('/login', methods=['GET', 'POST'])

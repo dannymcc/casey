@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#F0EDE6" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
+    <title>Offline — Casey</title>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --display: 'Source Serif 4', 'Iowan Old Style', Georgia, serif;
+            --font: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
+            --parchment: #F0EDE6;
+            --surface: #FAF9F6;
+            --ink: #2C2825;
+            --ink-secondary: #6D665E;
+            --ink-muted: #9C958B;
+            --clay: #C4684A;
+            --clay-hover: #B35C40;
+            --border: rgba(44, 40, 37, 0.10);
+            --radius: 8px;
+        }
+
+        [data-theme="dark"] {
+            --parchment: #1C1B18;
+            --surface: #242220;
+            --ink: #E6E2DA;
+            --ink-secondary: #ACA69D;
+            --ink-muted: #837C73;
+            --clay: #DE8A66;
+            --clay-hover: #E89B79;
+            --border: rgba(230, 226, 218, 0.12);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root:not([data-theme="light"]) {
+                --parchment: #1C1B18;
+                --surface: #242220;
+                --ink: #E6E2DA;
+                --ink-secondary: #ACA69D;
+                --ink-muted: #837C73;
+                --clay: #DE8A66;
+                --clay-hover: #E89B79;
+                --border: rgba(230, 226, 218, 0.12);
+            }
+        }
+
+        html { background: var(--parchment); overscroll-behavior-y: contain; }
+
+        body {
+            font-family: var(--font);
+            background: var(--parchment);
+            color: var(--ink);
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1.25rem;
+            padding-left: calc(1.25rem + env(safe-area-inset-left));
+            padding-right: calc(1.25rem + env(safe-area-inset-right));
+            padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .card {
+            max-width: 26rem;
+            text-align: center;
+        }
+
+        .mark {
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 2.5rem;
+            letter-spacing: -0.02em;
+            color: var(--ink);
+            margin-bottom: 1.75rem;
+        }
+
+        .mark .stop { color: var(--clay); }
+
+        .kicker {
+            font-family: var(--mono);
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.16em;
+            color: var(--ink-muted);
+            margin-bottom: 0.875rem;
+        }
+
+        h1 {
+            font-family: var(--display);
+            font-weight: 600;
+            font-size: 1.5rem;
+            letter-spacing: -0.01em;
+            margin-bottom: 0.75rem;
+        }
+
+        p {
+            font-size: 14.5px;
+            line-height: 1.6;
+            color: var(--ink-secondary);
+            margin-bottom: 1.75rem;
+        }
+
+        .retry {
+            display: inline-block;
+            font-family: var(--font);
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--surface);
+            background: var(--clay);
+            border: none;
+            border-radius: var(--radius);
+            padding: 0.625rem 1.375rem;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .retry:hover { background: var(--clay-hover); }
+
+        .rule {
+            width: 3rem;
+            height: 1px;
+            background: var(--border);
+            margin: 0 auto 1.75rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="mark">ca<span class="stop">.</span></div>
+        <div class="rule"></div>
+        <div class="kicker">No connection</div>
+        <h1>The page is out of reach</h1>
+        <p>Your journal, tasks and blips live on the server rather than on this device, so Casey needs a connection to fetch them. Everything will be waiting once you are back online.</p>
+        <button class="retry" onclick="location.reload()">Try again</button>
+    </div>
+    <script>
+    (function() {
+        var theme = null;
+        try { theme = localStorage.getItem('casey-theme'); } catch (e) {}
+        if (theme === 'dark' || theme === 'light') {
+            document.documentElement.setAttribute('data-theme', theme);
+        }
+    })();
+    </script>
+</body>
+</html>
