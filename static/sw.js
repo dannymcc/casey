@@ -14,7 +14,7 @@
  * so installed clients drop stale assets on activate.
  */
 
-const CACHE_VERSION = 'casey-sw-1';
+const CACHE_VERSION = 'casey-sw-2';
 const STATIC_CACHE = CACHE_VERSION + '-static';
 const OFFLINE_URL = '/static/offline.html';
 
