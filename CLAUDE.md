@@ -12,6 +12,7 @@ Personal productivity app — journaling, tasks, and blips (random thought surfa
 
 When the user says "ship it", "commit push tag release deploy", or similar — run the full pipeline:
 
+0. Bump `CACHE_VERSION` in `static/sw.js` (e.g. `casey-sw-1` → `casey-sw-2`) and include it in the release commit — installed PWAs only drop cached static assets when this changes, so skipping it serves stale CSS/icons to installed clients
 1. `git add` the changed files (by name, not `-A`)
 2. `git commit` with a concise message (never add Co-Authored-By lines)
 3. `git push origin master`
