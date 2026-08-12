@@ -3,51 +3,139 @@
 {% block title %}Blips - Casey{% endblock %}
 
 {% block extra_styles %}
-.blip-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: start;
-    gap: 0.75rem;
+.blip-compose {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
 }
 
+.blip-compose .writing {
+    border-left: 1px solid var(--clay-rule);
+    padding-left: 1.125rem;
+    transition: border-color 0.2s ease;
+}
+
+.blip-compose .writing:focus-within { border-left-color: var(--clay); }
+
+.blip-compose textarea {
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    resize: none;
+    min-height: 66px;
+    font-family: var(--display);
+    font-size: 1.0625rem;
+    line-height: 1.65;
+}
+
+.blip-compose textarea:hover { border: none; }
+
+.blip-compose textarea:focus,
+.blip-compose textarea:focus-visible {
+    outline: none;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+.blip-compose textarea::placeholder { color: var(--ink-faint); font-style: italic; }
+
+.compose-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-top: 1rem;
+    padding-left: 1.125rem;
+}
+
+.blip { position: relative; }
+
+.blip-row {
+    display: block;
+    padding-right: 1rem;
+}
+
+/* Actions float over the right edge so they never shorten the line length */
 .blip-actions {
+    position: absolute;
+    top: -0.25rem;
+    right: 0;
     display: flex;
     gap: 0.125rem;
-    flex-shrink: 0;
+    background: var(--parchment);
+    border-radius: var(--radius-xs);
     opacity: 0;
     transition: opacity 0.15s;
 }
 
-.blip:hover .blip-actions { opacity: 1; }
+.blip:hover .blip-actions,
+.blip:focus-within .blip-actions { opacity: 1; }
+
+.blip-actions form { display: flex; margin: 0; }
+
+.blip-actions button,
+.blip-actions .btn-ghost {
+    font-size: 12px;
+    min-height: auto;
+    padding: 0.25rem 0.4375rem;
+    line-height: 1.4;
+}
+
+.blip-list { margin-bottom: 2rem; }
+
+.show-more {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    text-decoration: none;
+}
+
+.show-more:hover { color: var(--clay); }
 
 @media (max-width: 768px) {
-    .blip-actions { opacity: 1; }
+    .blip-actions {
+        position: static;
+        opacity: 1;
+        margin-top: 0.625rem;
+        background: transparent;
+        flex-wrap: wrap;
+    }
+    .blip-row { padding-right: 0; }
+    .blip-compose { padding: 1.125rem; }
+    .compose-actions { padding-left: 1rem; }
+    .blip-compose .writing { padding-left: 1rem; }
 }
 {% endblock %}
 
 {% block content %}
 <div style="max-width: 680px;">
     <h1 class="page-title">Blips</h1>
-    <p class="page-desc">Ongoing topics, questions, or ideas you're tracking.</p>
+    <p class="page-desc">Topics, questions and ideas you are keeping an eye on. Casey brings a few of them back to your Today page each day.</p>
 
-    <div class="card" style="margin-bottom: 1rem;">
+    <div class="blip-compose">
         <form method="POST" action="/blips/add">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <textarea name="content" rows="3" placeholder="A thought, question, or idea to track..." required style="min-height: 72px;"></textarea>
-            <div style="margin-top: 0.625rem; display: flex; gap: 0.5rem; align-items: center;">
-                <button type="submit">Add Blip</button>
-                <button type="button" class="btn-secondary" style="font-size: 12px;" onclick="document.getElementById('bulk-form').style.display = document.getElementById('bulk-form').style.display === 'none' ? 'block' : 'none'">Bulk Add</button>
+            <div class="writing">
+                <textarea name="content" rows="3" placeholder="A thought, question or idea worth keeping" required aria-label="New blip"></textarea>
+            </div>
+            <div class="compose-actions">
+                <button type="submit">Add blip</button>
+                <button type="button" class="btn-secondary" style="font-size: 12px;" onclick="document.getElementById('bulk-form').style.display = document.getElementById('bulk-form').style.display === 'none' ? 'block' : 'none'">Add several</button>
             </div>
         </form>
     </div>
 
-    <div id="bulk-form" class="card" style="margin-bottom: 1rem; display: none;">
+    <div id="bulk-form" class="card" style="margin-bottom: 2rem; display: none;">
         <form method="POST" action="/blips/bulk-add">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <div style="font-size: 13px; color: var(--ink-secondary); margin-bottom: 0.5rem;">One blip per line</div>
-            <textarea name="content" rows="6" placeholder="First blip&#10;Second blip&#10;Third blip..." required style="min-height: 100px;"></textarea>
-            <div style="margin-top: 0.625rem;">
-                <button type="submit">Add All</button>
+            <h2 style="margin-bottom: 0.75rem;">One blip per line</h2>
+            <textarea name="content" rows="6" placeholder="First blip&#10;Second blip&#10;Third blip" required style="min-height: 110px;" aria-label="Several blips, one per line"></textarea>
+            <div style="margin-top: 0.875rem;">
+                <button type="submit">Add them all</button>
             </div>
         </form>
     </div>
@@ -59,59 +147,63 @@
     </div>
 
     {% if blips %}
+        <div class="blip-list">
         {% for blip in blips %}
-            <div class="blip" style="margin-bottom: 0.375rem;">
+            <div class="blip">
                 <div class="blip-row">
                     <div style="flex: 1; min-width: 0;">
                         <div style="white-space: pre-wrap;">{% if blip.pinned %}<span class="pin-icon" title="Pinned">&#9733;</span>{% endif %}{{ blip.content }}</div>
                         <div class="blip-meta">
-                            {% if blip.updated_at and blip.updated_at != blip.created_at %}
-                                Updated {{ blip.updated_at | uk_date }}
+                            {% if blip.surface_count %}
+                                <span class="tally" aria-hidden="true">{% for i in range([blip.surface_count, 5] | min) %}<i></i>{% endfor %}{% if blip.surface_count > 5 %}<i class="faint"></i>{% endif %}</span>
+                                surfaced {{ blip.surface_count }}&times;
                             {% else %}
-                                Created {{ blip.created_at | uk_date }}
+                                not yet surfaced
                             {% endif %}
-                            {% if blip.last_surfaced %}
-                                &middot; Surfaced {{ blip.surface_count }}&times;
+                            &middot;
+                            {% if blip.updated_at and blip.updated_at != blip.created_at %}
+                                updated {{ blip.updated_at | uk_date }}
                             {% else %}
-                                &middot; Never surfaced
+                                added {{ blip.created_at | uk_date }}
                             {% endif %}
                         </div>
                     </div>
                     <div class="blip-actions">
                         <form method="POST" action="/blips/{{ blip.id }}/pin" style="margin: 0;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button type="submit" class="btn-ghost" style="font-size: 12px; min-height: auto;" title="{{ 'Unpin' if blip.pinned else 'Pin' }}">{{ '&#9733;' if blip.pinned else '&#9734;' }}</button>
+                            <button type="submit" class="btn-ghost" title="{{ 'Unpin' if blip.pinned else 'Pin' }}" aria-label="{{ 'Unpin this blip' if blip.pinned else 'Pin this blip' }}">{% if blip.pinned %}&#9733;{% else %}&#9734;{% endif %}</button>
                         </form>
                         <form method="POST" action="/blips/{{ blip.id }}/to-task" style="margin: 0;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button type="submit" class="btn-ghost" style="font-size: 12px; min-height: auto;" title="Convert to task">&rarr; Task</button>
+                            <button type="submit" class="btn-ghost" title="Make this a task">&rarr; Task</button>
                         </form>
-                        <a href="/blips/{{ blip.id }}/edit" class="btn-ghost" style="text-decoration: none; font-size: 12px;">Edit</a>
+                        <a href="/blips/{{ blip.id }}/edit" class="btn-ghost" style="text-decoration: none;">Edit</a>
                         <form method="POST" action="/blips/{{ blip.id }}/archive" style="margin: 0;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button type="submit" class="btn-ghost" style="font-size: 12px; min-height: auto;" title="{{ 'Unarchive' if blip.archived else 'Archive' }}">{{ 'Restore' if blip.archived else 'Archive' }}</button>
+                            <button type="submit" class="btn-ghost" title="{{ 'Unarchive' if blip.archived else 'Archive' }}">{{ 'Restore' if blip.archived else 'Archive' }}</button>
                         </form>
                         <form method="POST" action="/blips/{{ blip.id }}/delete" style="margin: 0;">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button type="submit" class="btn-ghost btn-danger" style="font-size: 14px; min-height: auto; line-height: 1;">&times;</button>
+                            <button type="submit" class="btn-ghost btn-danger" style="font-size: 14px; line-height: 1;" title="Delete" aria-label="Delete blip">&times;</button>
                         </form>
                     </div>
                 </div>
             </div>
         {% endfor %}
+        </div>
         {% if has_more %}
-        <div style="text-align: center; margin-top: 1rem;">
-            <a href="?show={{ show }}&page={{ page + 1 }}" style="color: var(--clay); text-decoration: none; font-size: 13px; font-weight: 500;">Show more</a>
+        <div>
+            <a href="?show={{ show }}&page={{ page + 1 }}" class="show-more">Show more &rsaquo;</a>
         </div>
         {% endif %}
     {% else %}
         <div class="empty-state">
             {% if show == 'archived' %}
-                No archived blips.
+                Nothing archived.
             {% elif show == 'pinned' %}
-                No pinned blips.
+                Nothing pinned. Pin a blip to see it more often.
             {% else %}
-                No blips yet. Add your first thought above.
+                No blips yet. Add the first one above and Casey will bring it back to you later.
             {% endif %}
         </div>
     {% endif %}

@@ -3,17 +3,51 @@
 {% block title %}Edit Task - Casey{% endblock %}
 
 {% block extra_styles %}
+.subtask-block {
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border-light);
+}
+
 .subtask-list {
     list-style: none;
-    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
 }
 
 .subtask-list li {
     display: flex;
     align-items: center;
     padding: 0.375rem 0;
-    font-size: 13px;
+    font-size: 13.5px;
     gap: 0.5rem;
+}
+
+.subtask-add {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.subtask-add input[type="text"] {
+    flex: 1;
+    font-size: 13px;
+    padding: 0.4375rem 0.6875rem;
+    background: transparent;
+}
+
+.subtask-add button {
+    flex-shrink: 0;
+    font-size: 12px;
+    padding: 0.4375rem 0.75rem;
+    min-height: auto;
+    background: transparent;
+    color: var(--ink-secondary);
+    border: 1px solid var(--border);
+}
+
+.subtask-add button:hover {
+    background: var(--surface-hover);
+    color: var(--ink);
+    border-color: var(--border-emphasis);
 }
 
 .subtask-list li.completed span {
@@ -26,11 +60,12 @@
 <div style="max-width: 560px;">
     <a href="/" class="back-link">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 12L6 8l4-4"/></svg>
-        Back to Today
+        Back to today
     </a>
 
+    <h1 class="page-title">Edit task</h1>
+
     <div class="card">
-        <h2>Edit Task</h2>
 
         <form method="POST" action="/tasks/{{ task.id }}/edit">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -40,11 +75,11 @@
             </div>
             <div class="form-group">
                 <label for="notes">Notes</label>
-                <textarea id="notes" name="notes" rows="4" placeholder="Add notes or details..." style="min-height: 80px;">{{ task.notes or '' }}</textarea>
+                <textarea id="notes" name="notes" rows="4" placeholder="Anything worth remembering about this" style="min-height: 80px;">{{ task.notes or '' }}</textarea>
             </div>
             <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
                 <div class="form-group" style="flex: 1; min-width: 120px;">
-                    <label for="due_date">Due Date</label>
+                    <label for="due_date">Due date</label>
                     <input type="date" id="due_date" name="due_date" value="{{ task.due_date or '' }}">
                 </div>
                 <div class="form-group" style="min-width: 100px;">
@@ -66,14 +101,14 @@
                 </div>
             </div>
             <div class="btn-group">
-                <button type="submit">Save Changes</button>
+                <button type="submit">Save changes</button>
                 <a href="/" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
 
-        {% if subtasks %}
-        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light);">
-            <div style="font-size: 12px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem;">Subtasks</div>
+        <div class="subtask-block">
+            <div class="section-label">Steps</div>
+            {% if subtasks %}
             <ul class="subtask-list">
                 {% for sub in subtasks %}
                 <li class="{{ 'completed' if sub.completed }}">
@@ -89,19 +124,19 @@
                 </li>
                 {% endfor %}
             </ul>
+            {% endif %}
+
+            <form method="POST" action="/tasks/{{ task.id }}/subtasks/add" class="subtask-add">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <input type="text" name="title" placeholder="Add a step" required aria-label="New step">
+                <button type="submit">Add</button>
+            </form>
         </div>
-        {% endif %}
 
-        <form method="POST" action="/tasks/{{ task.id }}/subtasks/add" style="margin-top: 0.75rem; display: flex; gap: 0.375rem;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <input type="text" name="title" placeholder="Add subtask..." required style="font-size: 12px; padding: 0.375rem 0.5rem; flex: 1;">
-            <button type="submit" style="font-size: 12px; padding: 0.375rem 0.75rem; min-height: auto;">Add</button>
-        </form>
-
-        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-size: 12px; color: var(--ink-muted);">
-            Created {{ task.created_at | uk_date }}
+        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-light); font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; color: var(--ink-faint);">
+            Added {{ task.created_at | uk_date }}
             {% if task.completed_at %}
-                &middot; Completed {{ task.completed_at | uk_date }}
+                &middot; completed {{ task.completed_at | uk_date }}
             {% endif %}
         </div>
     </div>

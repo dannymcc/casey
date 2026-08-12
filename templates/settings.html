@@ -3,30 +3,42 @@
 {% block title %}Settings - Casey{% endblock %}
 
 {% block extra_styles %}
+.settings-card {
+    padding: 0;
+    overflow: hidden;
+}
+
 .settings-section-label {
-    font-size: 11px;
-    font-weight: 600;
+    font-family: var(--mono);
+    font-size: 10.5px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.16em;
     color: var(--ink-muted);
-    padding: 1.25rem 1.25rem 0.5rem;
+    padding: 1.75rem 1.25rem 0.625rem;
+    border-bottom: 1px solid var(--border-light);
 }
 
 .settings-section-label:first-child {
-    padding-top: 0.75rem;
+    padding-top: 0.5rem;
 }
 
 .settings-row {
-    padding: 0.75rem 1.25rem;
+    padding: 0.875rem 1.25rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 1rem;
     transition: background 0.15s;
-    background: var(--parchment);
+    background: transparent;
+    border-bottom: 1px solid var(--border-light);
 }
+
+.settings-row:last-child { border-bottom: none; }
 
 a.settings-row {
     text-decoration: none;
+    color: inherit;
     cursor: pointer;
 }
 
@@ -36,12 +48,12 @@ a.settings-row:hover {
 
 .settings-label {
     font-weight: 500;
-    font-size: 14px;
+    font-size: 14.5px;
     margin-bottom: 0.125rem;
 }
 
 .settings-desc {
-    font-size: 12px;
+    font-size: 12.5px;
     color: var(--ink-muted);
 }
 
@@ -53,6 +65,13 @@ a.settings-row:hover {
 .theme-select {
     display: flex;
     gap: 0.375rem;
+    flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+    .settings-row { flex-wrap: wrap; gap: 0.75rem; }
+    .theme-select { width: 100%; }
+    .theme-option { flex: 1; }
 }
 
 .theme-option {
@@ -84,15 +103,15 @@ a.settings-row:hover {
 {% block content %}
 <div style="max-width: 600px;">
     <h1 class="page-title">Settings</h1>
-    <p class="page-desc">Manage your Casey configuration</p>
+    <p class="page-desc">How Casey behaves, and what happens to your data.</p>
 
-    <div class="card">
+    <div class="card settings-card">
         <div class="settings-section-label">Journal</div>
 
         <a href="/settings/templates" class="settings-row">
             <div>
-                <div class="settings-label">Journal Templates</div>
-                <div class="settings-desc">Customize your writing prompts</div>
+                <div class="settings-label">Journal templates</div>
+                <div class="settings-desc">Your writing prompts, ready to drop into an entry</div>
             </div>
             <span class="settings-arrow">&rsaquo;</span>
         </a>
@@ -102,7 +121,7 @@ a.settings-row:hover {
         <div class="settings-row">
             <div>
                 <div class="settings-label">Appearance</div>
-                <div class="settings-desc">Choose your preferred theme</div>
+                <div class="settings-desc">Follow the system, or pick one</div>
             </div>
             <div class="theme-select">
                 <button type="button" class="theme-option" data-theme="auto" onclick="setTheme('auto')">Auto</button>
@@ -116,8 +135,8 @@ a.settings-row:hover {
 
             <div class="settings-row">
                 <div style="flex: 1;">
-                    <div class="settings-label">Date Format</div>
-                    <div class="settings-desc">How dates are displayed throughout the app</div>
+                    <div class="settings-label">Date format</div>
+                    <div class="settings-desc">How dates are written throughout the app</div>
                     <div style="margin-top: 0.375rem;">
                         <select name="date_format" style="font-size: 12px; padding: 0.375rem 0.5rem; width: auto;">
                             <option value="dd/mm/yyyy" {{ 'selected' if date_format == 'dd/mm/yyyy' }}>DD/MM/YYYY (10/02/2026)</option>
@@ -130,8 +149,8 @@ a.settings-row:hover {
 
             <div class="settings-row">
                 <div style="flex: 1;">
-                    <div class="settings-label">Daily Blips</div>
-                    <div class="settings-desc">How many blips to surface each day</div>
+                    <div class="settings-label">Daily blips</div>
+                    <div class="settings-desc">How many blips come back each day</div>
                     <div style="margin-top: 0.375rem;">
                         <select name="daily_blip_count" style="font-size: 12px; padding: 0.375rem 0.5rem; width: auto;">
                             {% for i in range(1, 11) %}
@@ -143,7 +162,7 @@ a.settings-row:hover {
             </div>
 
             <div class="settings-row">
-                <button type="submit" style="font-size: 12px; padding: 0.375rem 0.75rem; min-height: auto;">Save Preferences</button>
+                <button type="submit" style="font-size: 12px; padding: 0.375rem 0.75rem; min-height: auto;">Save preferences</button>
             </div>
         </form>
 
@@ -160,7 +179,7 @@ a.settings-row:hover {
         <a href="/about" class="settings-row">
             <div>
                 <div class="settings-label">About Casey</div>
-                <div class="settings-desc">The story behind the app</div>
+                <div class="settings-desc">Where the idea came from</div>
             </div>
             <span class="settings-arrow">&rsaquo;</span>
         </a>
@@ -169,8 +188,8 @@ a.settings-row:hover {
 
         <div class="settings-row">
             <div>
-                <div class="settings-label">Export Data</div>
-                <div class="settings-desc">Download all your data</div>
+                <div class="settings-label">Export data</div>
+                <div class="settings-desc">Take a copy of everything in your account</div>
                 <div style="margin-top: 0.375rem; display: flex; gap: 0.75rem;">
                     <a href="/export/json" style="color: var(--clay); text-decoration: none; font-size: 12px; font-weight: 500;">Download JSON</a>
                     <a href="/export/csv" style="color: var(--clay); text-decoration: none; font-size: 12px; font-weight: 500;">Download CSV</a>
@@ -180,7 +199,7 @@ a.settings-row:hover {
 
         <div class="settings-row">
             <div style="flex: 1;">
-                <div class="settings-label">Import Data</div>
+                <div class="settings-label">Import data</div>
                 <div class="settings-desc">Restore from a Casey JSON export</div>
                 <form method="POST" action="/import/json" enctype="multipart/form-data" style="margin-top: 0.375rem; display: flex; gap: 0.5rem; align-items: center;">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -192,8 +211,8 @@ a.settings-row:hover {
 
         <a href="/settings/api" class="settings-row">
             <div>
-                <div class="settings-label">API Settings</div>
-                <div class="settings-desc">Manage personal access tokens</div>
+                <div class="settings-label">API access</div>
+                <div class="settings-desc">Personal access tokens for other apps</div>
             </div>
             <span class="settings-arrow">&rsaquo;</span>
         </a>
@@ -203,7 +222,7 @@ a.settings-row:hover {
         {% if is_admin %}
         <a href="/admin" class="settings-row">
             <div>
-                <div class="settings-label">Admin Panel</div>
+                <div class="settings-label">Admin panel</div>
                 <div class="settings-desc">System overview and user management</div>
             </div>
             <span class="settings-arrow">&rsaquo;</span>
