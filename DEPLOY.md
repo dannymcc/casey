@@ -6,7 +6,7 @@ Casey uses GitHub Actions to automatically build and publish Docker images to Gi
 
 ### Deployment Process
 
-**Production (helios):**
+**Production (hyperion):**
 
 1. Push changes to GitHub:
    ```bash
@@ -17,10 +17,10 @@ Casey uses GitHub Actions to automatically build and publish Docker images to Gi
 
 2. GitHub Actions automatically builds the Docker image and tags it as `latest`
 
-3. On helios, pull and restart:
+3. On hyperion, pull and restart:
    ```bash
-   ssh helios
-   cd ~/casey
+   ssh hyperion
+   cd ~/docker/casey
    docker compose pull
    docker compose up -d
    ```
@@ -76,10 +76,9 @@ docker exec casey python seed_demo_data.py
 
 ## Initial Setup (First Deploy)
 
-1. Copy to helios:
+1. Copy to the server:
    ```bash
-   cd ~/.openclaw/workspace
-   scp -r casey helios:~/
+   scp -r casey hyperion:~/docker/
    ```
 
 2. Create `.env` file:
