@@ -2,13 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Casey - Personal productivity app for journaling, tasks, and blips">
     <meta name="theme-color" content="#F0EDE6" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Casey">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="32x32">
     <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
     <title>{% block title %}Casey{% endblock %}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -128,6 +140,11 @@
             }
         }
 
+        html {
+            background: var(--parchment);
+            overscroll-behavior-y: contain;
+        }
+
         body {
             font-family: var(--font);
             background: var(--parchment);
@@ -153,6 +170,11 @@
             -webkit-backdrop-filter: blur(16px);
             backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border);
+            /* In standalone mode the page runs under the status bar and notch;
+               the blurred header background carries into those areas. */
+            padding-top: env(safe-area-inset-top);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
         }
 
         header .container {
@@ -212,6 +234,8 @@
         /* Content area */
         .content {
             padding: 2.5rem 0 5rem;
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
             animation: enter 0.25s ease-out;
         }
 
@@ -601,7 +625,7 @@
             nav a { padding: 0 0.5rem; font-size: 13px; white-space: nowrap; }
             nav a.active::after { left: 0.5rem; right: 0.5rem; }
             .card { padding: 1.25rem; }
-            .content { padding: 1.75rem 0 3.5rem; }
+            .content { padding: 1.75rem 0 3.5rem; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
             textarea, input[type="text"], input[type="password"], input[type="date"] { font-size: 16px; }
             textarea { min-height: 160px; font-size: 1.0625rem; }
             button, .btn { padding: 0.5625rem 1rem; font-size: 14px; min-height: 44px; }
@@ -727,6 +751,9 @@
         /* Footer */
         footer {
             padding: 2rem 0;
+            padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
             margin-top: 2rem;
             border-top: 1px solid var(--border-light);
         }

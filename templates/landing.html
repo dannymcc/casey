@@ -2,13 +2,25 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="description" content="Casey is a calm place for morning journaling, a short task list, and blips - ideas you park and Casey brings back weeks later. Free, nothing tracked, and self-hostable.">
     <meta name="theme-color" content="#F0EDE6" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="32x32">
     <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Casey">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js');
+            });
+        }
+    </script>
     <title>Casey - Journal, Tasks, and Blips</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -58,6 +70,11 @@
             }
         }
 
+        html {
+            background: var(--parchment);
+            overscroll-behavior-y: contain;
+        }
+
         body {
             font-family: var(--font);
             background: var(--parchment);
@@ -66,6 +83,9 @@
             font-size: 15px;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            padding-top: env(safe-area-inset-top);
+            padding-left: env(safe-area-inset-left);
+            padding-right: env(safe-area-inset-right);
         }
 
         .wrap {
@@ -594,6 +614,7 @@
         /* Footer */
         .landing-footer {
             padding: 1.75rem 0 2.5rem;
+            padding-bottom: calc(2.5rem + env(safe-area-inset-bottom));
             border-top: 1px solid var(--border-light);
             display: flex;
             align-items: center;
@@ -657,7 +678,7 @@
             .philosophy p { padding-left: calc(1.125rem + 2px); }
             .closing { padding: 2.25rem 1.5rem; margin-bottom: 3rem; }
             .closing h2 { font-size: 1.875rem; }
-            .landing-footer { padding: 1.5rem 0 2rem; }
+            .landing-footer { padding: 1.5rem 0 2rem; padding-bottom: calc(2rem + env(safe-area-inset-bottom)); }
         }
 
         @media (prefers-reduced-motion: reduce) {
