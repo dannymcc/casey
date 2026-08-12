@@ -83,8 +83,8 @@ docker exec casey python seed_demo_data.py
 
 2. Create `.env` file:
    ```bash
-   ssh helios
-   cd ~/casey
+   ssh hyperion
+   cd ~/docker/casey
    cp .env.example .env
    # Edit .env and set SECRET_KEY to a random string
    ```
@@ -115,7 +115,7 @@ Access at: https://casey.dmcc.io
 
 ## Backup Automation
 
-Add to crontab on helios:
+Add to crontab on hyperion:
 
 ```bash
 crontab -e
