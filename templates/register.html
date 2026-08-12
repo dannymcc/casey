@@ -3,18 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#F0EDE6" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#1C1B18" media="(prefers-color-scheme: dark)">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" sizes="32x32">
     <link rel="icon" href="{{ url_for('static', filename='favicon.svg') }}" type="image/svg+xml">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}">
     <title>Register - Casey</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
     <style>
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
+            --display: 'Source Serif 4', 'Iowan Old Style', Georgia, serif;
             --font: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            --mono: 'JetBrains Mono', 'SF Mono', 'Fira Code', monospace;
+
             --parchment: #F0EDE6;
             --surface: #FAF9F6;
             --surface-inset: #EAE7E0;
@@ -23,8 +28,10 @@
             --ink-muted: #9C958B;
             --ink-faint: #B8B2A8;
             --clay: #C4684A;
-            --clay-hover: #B35C40;
+            --clay-rule: rgba(196, 104, 74, 0.32);
+            --clay-ring: rgba(196, 104, 74, 0.18);
             --border: rgba(44, 40, 37, 0.10);
+            --border-light: rgba(44, 40, 37, 0.06);
             --border-emphasis: rgba(44, 40, 37, 0.16);
             --danger: #C25550;
             --danger-bg: #F8EDEC;
@@ -32,24 +39,51 @@
             --radius-sm: 6px;
         }
 
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --parchment: #1C1B18;
+                --surface: #242220;
+                --surface-inset: #1A1917;
+                --ink: #E6E2DA;
+                --ink-secondary: #ACA69D;
+                --ink-muted: #837C73;
+                --ink-faint: #5A554E;
+                --clay: #DE8A66;
+                --clay-rule: rgba(222, 138, 102, 0.34);
+                --clay-ring: rgba(222, 138, 102, 0.22);
+                --border: rgba(230, 226, 218, 0.12);
+                --border-light: rgba(230, 226, 218, 0.06);
+                --border-emphasis: rgba(230, 226, 218, 0.20);
+                --danger: #E08079;
+                --danger-bg: #2B201F;
+            }
+        }
+
         body {
             font-family: var(--font);
             background: var(--parchment);
             color: var(--ink);
             line-height: 1.6;
-            font-size: 14px;
+            font-size: 15px;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 2rem 1rem;
+            padding: 2rem 1.25rem;
+        }
+
+        :focus-visible {
+            outline: 2px solid var(--clay);
+            outline-offset: 2px;
+            border-radius: 2px;
         }
 
         .auth-wrap {
             width: 100%;
-            max-width: 360px;
-            animation: enter 0.25s ease-out;
+            max-width: 340px;
+            animation: enter 0.3s ease-out both;
         }
 
         @keyframes enter {
@@ -57,16 +91,32 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        .auth-brand {
+            font-family: var(--display);
+            font-size: 1.75rem;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+            color: var(--ink);
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 2.25rem;
+        }
+
+        .auth-brand .stop { color: var(--clay); }
+
         .auth-header {
-            text-align: center;
+            border-left: 2px solid var(--clay-rule);
+            padding-left: 1.125rem;
             margin-bottom: 2rem;
         }
 
         .auth-header h1 {
-            font-size: 1.25rem;
+            font-family: var(--display);
+            font-size: 1.5rem;
             font-weight: 600;
-            letter-spacing: -0.025em;
-            margin-bottom: 0.25rem;
+            letter-spacing: -0.02em;
+            line-height: 1.25;
+            margin-bottom: 0.125rem;
         }
 
         .auth-header p {
@@ -74,47 +124,44 @@
             font-size: 14px;
         }
 
-        .auth-card {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 2rem;
-            border: 1px solid var(--border);
-        }
+        .form-group { margin-bottom: 1.125rem; }
 
-        .form-group { margin-bottom: 1.25rem; }
         .form-group label {
             display: block;
-            margin-bottom: 0.375rem;
+            margin-bottom: 0.4375rem;
             color: var(--ink-secondary);
-            font-size: 13px;
-            font-weight: 500;
+            font-family: var(--mono);
+            font-size: 10.5px;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
         }
 
         .hint {
             display: block;
-            margin-top: 0.25rem;
-            font-size: 12px;
+            margin-top: 0.375rem;
+            font-size: 12.5px;
             color: var(--ink-muted);
         }
 
         input[type="text"], input[type="password"] {
             width: 100%;
-            padding: 0.625rem 0.875rem;
-            border: 1px solid var(--border);
+            padding: 0.6875rem 0.875rem;
+            border: 1px solid var(--border-emphasis);
             border-radius: var(--radius-sm);
             font-family: var(--font);
-            font-size: 14px;
+            font-size: 15px;
             color: var(--ink);
-            background: var(--surface-inset);
+            background: var(--surface);
             transition: border-color 0.15s, box-shadow 0.15s;
         }
 
-        input:hover { border-color: var(--border-emphasis); }
-        input:focus { outline: none; border-color: var(--clay); box-shadow: 0 0 0 3px rgba(196, 104, 74, 0.1); background: var(--surface); }
+        input:hover { border-color: var(--ink-faint); }
+        input:focus { outline: none; border-color: var(--clay); box-shadow: 0 0 0 3px var(--clay-ring); }
 
         button {
             width: 100%;
-            padding: 0.625rem 1rem;
+            padding: 0.75rem 1rem;
+            margin-top: 0.5rem;
             background: var(--ink);
             color: var(--parchment);
             border: none;
@@ -123,79 +170,103 @@
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            transition: opacity 0.15s;
+            transition: background 0.15s;
         }
 
-        button:hover { opacity: 0.85; }
+        button:hover { background: var(--ink-secondary); }
 
         .auth-footer {
-            text-align: center;
-            margin-top: 1.5rem;
-            font-size: 13px;
+            margin-top: 1.75rem;
+            font-size: 14px;
             color: var(--ink-muted);
         }
 
         .auth-footer a {
             color: var(--clay);
             text-decoration: none;
-            font-weight: 500;
+            border-bottom: 1px solid var(--clay-rule);
         }
 
-        .auth-footer a:hover { text-decoration: underline; }
+        .auth-footer a:hover { border-bottom-color: var(--clay); }
+
+        .auth-legal {
+            margin-top: 2.5rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid var(--border-light);
+            display: flex;
+            gap: 1.25rem;
+        }
+
+        .auth-legal a {
+            color: var(--ink-faint);
+            text-decoration: none;
+            font-size: 12.5px;
+        }
+
+        .auth-legal a:hover { color: var(--ink-muted); }
 
         .flash {
-            padding: 0.625rem 0.875rem;
+            padding: 0.6875rem 0.875rem;
             border-radius: var(--radius-sm);
             margin-bottom: 1.25rem;
             font-size: 13px;
             font-weight: 500;
             background: var(--danger-bg);
             color: var(--danger);
+            border-left: 2px solid currentColor;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
         }
     </style>
 </head>
 <body>
     <div class="auth-wrap">
+        <a href="/" class="auth-brand">casey<span class="stop">.</span></a>
+
         <div class="auth-header">
-            <h1>Casey</h1>
-            <p>Create your account</p>
+            <h1>Create an account</h1>
+            <p>Free, and yours to keep.</p>
         </div>
 
-        <div class="auth-card">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="flash">{{ message }}</div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash" role="alert">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
-            <form method="POST" action="/register">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" required autofocus autocomplete="username">
-                    <span class="hint">At least 3 characters, lowercase</span>
-                </div>
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" required autocomplete="new-password">
-                    <span class="hint">At least 6 characters</span>
-                </div>
-                <div class="form-group">
-                    <label for="confirm">Confirm Password</label>
-                    <input type="password" id="confirm" name="confirm" required autocomplete="new-password">
-                </div>
-                <button type="submit">Create Account</button>
-            </form>
-        </div>
+        <form method="POST" action="/register">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autofocus autocomplete="username">
+                <span class="hint">Three characters or more, lowercase.</span>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="new-password">
+                <span class="hint">Six characters or more.</span>
+            </div>
+            <div class="form-group">
+                <label for="confirm">Confirm password</label>
+                <input type="password" id="confirm" name="confirm" required autocomplete="new-password">
+            </div>
+            <button type="submit">Create account</button>
+        </form>
 
         <div class="auth-footer">
             Already have an account? <a href="/login">Log in</a>
         </div>
 
-        <div class="auth-footer" style="margin-top: 0.75rem;">
-            <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a>
+        <div class="auth-legal">
+            <a href="/terms">Terms</a>
+            <a href="/privacy">Privacy</a>
         </div>
     </div>
 </body>
